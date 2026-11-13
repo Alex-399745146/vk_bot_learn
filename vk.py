@@ -1,0 +1,124 @@
+"""Минимальный клиент ВКонтакте для учебного бота.
+
+Здесь только `requests` и обычный `while`.
+Ни Django, ни asyncio, ни сторонних VK-библиотек.
+"""
+
+from __future__ import annotations
+
+import json
+import logging
+import secrets
+from typing import Any, Iterator
+
+import requests
+
+log = logging.getLogger(__name__)
+
+# Все методы ВК вызываются по одному адресу: https://api.vk.com/method/<имя>
+API_URL = "https://api.vk.com/method"
+
+# Версия API фиксируется, чтобы ответы не менялись неожиданно.
+API_VERSION = "5.199"
+
+# Сколько секунд ВК держит LongPoll-соединение, если событий нет.
+LONG_POLL_WAIT = 25
+
+
+class VK:
+    def __init__(self, token: str, group_id: int, *, api_version: str = API_VERSION) -> None:
+        self.token = token
+        self.group_id = group_id
+        self.api_version = api_version
+        # Session переиспользует TCP-соединение — так быстрее, чем requests.post каждый раз.
+        self.session = requests.Session()
+
+    def call(self, method: str, **params: Any) -> Any:
+        """Вызывает любой метод API и возвращает поле `response` некая точка входа в API.
+
+        Пример: self.call("messages.send", peer_id=1, message="привет").
+        """
+        data = {"access_token": self.token, "v": self.api_version, **params}
+        response = self.session.post(f"{API_URL}/{method}", data=data, timeout=30)
+        response.raise_for_status()  # сетевые ошибки 4xx/5xx → исключение requests
+        payload = response.json()
+
+        # ВК умеет отвечать HTTP 200 и класть ошибку внутрь JSON.
+        # Без этой проверки метод молча вернул бы None.
+        if "error" in payload:
+            message = payload["error"].get("error_msg", "неизвестная ошибка ВК")
+            raise RuntimeError(f"ВК: {message}")
+
+        return payload.get("response")
+
+    def send_message(self, peer_id: int, text: str, *, keyboard: str | None = None) -> None:
+        """Отправляет сообщение в диалог.
+
+        peer_id — идентификатор диалога. Для личных сообщений сообщества
+        он совпадает с id пользователя.
+        """
+        params: dict[str, Any] = {
+            "peer_id": peer_id,
+            "message": text,
+            # random_id обязателен: по нему ВК отличает новое сообщение от дубля.
+            "random_id": secrets.randbits(63),
+        }
+        if keyboard:
+            params["keyboard"] = keyboard
+        self.call("messages.send", **params)
+
+    def long_poll(self) -> Iterator[dict]:
+        """Бесконечный поток событий сообщества.
+
+        Как это работает:
+        1. groups.getLongPollServer выдаёт адрес, ключ и номер события (ts).
+        2. GET a_check ждёт до 25 секунд и возвращает новые события.
+        3. ts из ответа передаём в следующий запрос — так ВК понимает,
+           что мы уже прочитали.
+        """
+        server, key, ts = self._long_poll_session()
+        log.debug("LongPoll сессия: server=%s ts=%s key=%s…", server, ts, key[:6])
+
+        while True:
+            response = self.session.get(
+                server,
+                params={"act": "a_check", "key": key, "ts": ts, "wait": LONG_POLL_WAIT},
+                timeout=LONG_POLL_WAIT + 15,
+            )
+            response.raise_for_status()
+            data = response.json()
+
+            failed = data.get("failed")
+            if failed == 1:
+                # Небольшой разрыв, но можно продолжать с нового ts.
+                log.debug("a_check: failed=1, новый ts=%s", data["ts"])
+                ts = str(data["ts"])
+                continue
+            if failed in (2, 3):
+                # Ключ устарел или история потеряна — берём сессию заново.
+                log.warning("LongPoll: failed=%s, переподключаюсь", failed)
+                server, key, ts = self._long_poll_session()
+                log.debug("Новая сессия: server=%s ts=%s", server, ts)
+                continue
+
+            updates = data.get("updates", [])
+            log.debug("a_check: ts=%s, новых событий: %s", data.get("ts"), len(updates))
+            ts = str(data["ts"])
+            for update in updates:
+                # Сырое событие ВК — то, что реально пришло по сети.
+                log.debug("update: %s", json.dumps(update, ensure_ascii=False))
+                yield update
+
+    def _long_poll_session(self) -> tuple[str, str, str]:
+        """Получает server/key/ts для нового подключения."""
+        info = self.call("groups.getLongPollServer", group_id=self.group_id)
+        server = str(info["server"])
+        # ВК иногда отдаёт адрес без схемы — requests требует http(s)://.
+        if not server.startswith("http"):
+            server = f"https://{server}"
+        log.debug(
+            "groups.getLongPollServer: server=%s ts=%s (key скрыт)",
+            server,
+            info["ts"],
+        )
+        return server, str(info["key"]), str(info["ts"])
