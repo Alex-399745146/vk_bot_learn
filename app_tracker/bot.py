@@ -4,6 +4,8 @@ from __future__ import annotations
 
 import logging
 
+from django.utils import timezone
+
 from app_tracker.models import Participant
 
 log = logging.getLogger(__name__)
@@ -44,9 +46,11 @@ def handle_update(vk, update: dict) -> None:
             "Теперь мы тебя запомнили."
         )
     else:
+        # В базе время хранится в UTC, поэтому для показа переводим в МСК.
+        registered = timezone.localtime(participant.created_at)
         reply = (
             f"С возвращением, {participant.name}! "
-            f"Ты в базе с {participant.created_at:%d.%m.%Y}."
+            f"Ты в базе с {registered:%d.%m.%Y}."
         )
 
     log.debug("Ответ в %s: %r", peer_id, reply)
