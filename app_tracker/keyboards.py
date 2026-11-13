@@ -25,13 +25,14 @@ def empty_keyboard() -> str:
     return json.dumps({"buttons": []}, ensure_ascii=False)
 
 
-def main_menu() -> str:
+def main_menu(*, can_checkin: bool = True) -> str:
+    first_row = [button("Мои цели", "menu:goals")]
+    if can_checkin:
+        first_row.insert(0, button("Отметиться", "menu:checkin", color="positive"))
+
     return reply_keyboard(
         [
-            [
-                button("Отметиться", "menu:checkin", color="positive"),
-                button("Мои цели", "menu:goals"),
-            ],
+            first_row,
             [button("Изменить цели", "menu:edit")],
         ]
     )

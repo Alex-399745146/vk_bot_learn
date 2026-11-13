@@ -3,10 +3,11 @@
 from __future__ import annotations
 
 from django.db import models
+from django.utils import timezone
 
 
 class Participant(models.Model):
-    """Участник и его рецепт дня из трёх целей."""
+    """Участник и его цели на текущий месяц."""
 
     vk_id = models.BigIntegerField("VK ID", unique=True)
     last_name = models.CharField("Фамилия", max_length=80, blank=True, default="")
@@ -14,6 +15,9 @@ class Participant(models.Model):
     goal_1 = models.CharField("Цель 1", max_length=200, blank=True, default="")
     goal_2 = models.CharField("Цель 2", max_length=200, blank=True, default="")
     goal_3 = models.CharField("Цель 3", max_length=200, blank=True, default="")
+    goals_month = models.CharField(
+        "Месяц целей", max_length=7, blank=True, default="", help_text="Например: 2026-11"
+    )
     created_at = models.DateTimeField("Добавлен", auto_now_add=True)
 
     class Meta:
@@ -31,7 +35,9 @@ class Participant(models.Model):
 
     @property
     def has_goals(self) -> bool:
-        return all(self.goals)
+        """Цели заполнены и поставлены на текущий месяц."""
+        current = timezone.localdate().strftime("%Y-%m")
+        return self.goals_month == current and all(self.goals)
 
 
 class BotState(models.Model):

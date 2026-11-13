@@ -22,6 +22,21 @@ log = logging.getLogger(__name__)
 START_WORDS = {"/start", "начать", "start", "меню", "menu"}
 GOAL_COUNT = 3
 
+MONTHS = (
+    "январь",
+    "февраль",
+    "март",
+    "апрель",
+    "май",
+    "июнь",
+    "июль",
+    "август",
+    "сентябрь",
+    "октябрь",
+    "ноябрь",
+    "декабрь",
+)
+
 
 def handle_update(vk, update: dict) -> None:
     """Обрабатывает одно событие LongPoll."""
@@ -155,7 +170,7 @@ def handle_command(
         answer_report(vk, participant, state, peer_id, False)
         return
 
-    send(vk, peer_id, "Не понял команду.", keyboards.main_menu())
+    send(vk, peer_id, "Не понял команду.", menu_keyboard(participant))
 
 
 # --- Онбординг -------------------------------------------------------------
@@ -171,17 +186,18 @@ def begin_onboarding(
 ) -> None:
     set_state(state, states.ONBOARD_GOAL, {"goals": []})
     name = participant.first_name or "друг"
+    month = month_label(current_month())
 
     if edit:
         text = (
-            f"{name}, давай обновим рецепт.\n\n"
+            f"{name}, давай обновим цели на {month}.\n\n"
             "Цель 1 из 3. Напиши первую цель.\n"
             "Например: «активность 15 минут»."
         )
     else:
         text = (
             f"Привет, {name}! Я учебный бот.\n\n"
-            "Рецепт дня — это три цели, которые нужно выполнить за день.\n"
+            f"Давай поставим три цели на {month}. Их нужно выполнять каждый день.\n"
             "Например: «активность 15 минут», «зарядка после сна», "
             "«без сахара в кофе».\n\n"
             "Цель 1 из 3. Напиши первую цель."
@@ -220,7 +236,7 @@ def add_goal(
     send(
         vk,
         peer_id,
-        f"{goals_text(goals)}\n\nВсё верно?",
+        f"{goals_text(goals, current_month())}\n\nВсё верно?",
         keyboards.goals_confirm(),
     )
 
@@ -236,8 +252,9 @@ def confirm_goals(vk, participant: Participant, state: BotState, peer_id: int) -
         return
 
     participant.goal_1, participant.goal_2, participant.goal_3 = goals
-    participant.save(update_fields=["goal_1", "goal_2", "goal_3"])
-    show_menu(vk, participant, state, peer_id, intro="Записал. Рецепт дня сохранён.")
+    participant.goals_month = current_month()
+    participant.save(update_fields=["goal_1", "goal_2", "goal_3", "goals_month"])
+    show_menu(vk, participant, state, peer_id, intro="Записал. Цели на месяц сохранены.")
 
 
 # --- Отметка ---------------------------------------------------------------
@@ -300,15 +317,18 @@ def answer_report(
         vk,
         peer_id,
         report_text(participant, report, title=_report_title(report, exists=False)),
-        keyboards.main_menu(),
+        keyboards.main_menu(can_checkin=False),
     )
 
 
 # --- Тексты ----------------------------------------------------------------
 
 
-def goals_text(goals: list[str]) -> str:
-    lines = ["Твой рецепт дня:"]
+def goals_text(goals: list[str], month_key: str = "") -> str:
+    if month_key:
+        lines = [f"Цели на {month_label(month_key)}:"]
+    else:
+        lines = ["Твои цели:"]
     for number, goal in enumerate(goals, start=1):
         lines.append(f"{number}. {goal}")
     return "\n".join(lines)
@@ -351,11 +371,38 @@ def show_menu(
         return
 
     reset_state(state)
+    report = today_report(participant)
     name = participant.first_name or "друг"
-    text = f"Привет, {name}!\n\n{goals_text(participant.goals)}"
+    text = (
+        f"Привет, {name}!\n\n"
+        f"{goals_text(participant.goals, participant.goals_month)}"
+    )
+    if report is not None:
+        text += (
+            f"\n\nСегодня уже отмечено: {report.goals_done} из {GOAL_COUNT}. "
+            "Новая отметка будет доступна завтра."
+        )
     if intro:
         text = f"{intro}\n\n{text}"
-    send(vk, peer_id, text, keyboards.main_menu())
+
+    send(vk, peer_id, text, keyboards.main_menu(can_checkin=report is None))
+
+
+def menu_keyboard(participant: Participant) -> str:
+    """Меню без «Отметиться», если за сегодня уже есть отметка."""
+    return keyboards.main_menu(can_checkin=today_report(participant) is None)
+
+
+def current_month() -> str:
+    return timezone.localdate().strftime("%Y-%m")
+
+
+def month_label(month_key: str) -> str:
+    try:
+        year, month = month_key.split("-")
+        return f"{MONTHS[int(month) - 1]} {year}"
+    except (ValueError, IndexError):
+        return month_key
 
 
 # --- Служебное -------------------------------------------------------------
@@ -422,8 +469,7 @@ def validate_text(text: str) -> str | None:
 
 
 def expired(vk, participant: Participant, peer_id: int) -> None:
-    keyboard = keyboards.main_menu() if participant.has_goals else keyboards.empty_keyboard()
-    send(vk, peer_id, "Это сообщение устарело.", keyboard)
+    send(vk, peer_id, "Это сообщение устарело.", menu_keyboard(participant))
 
 
 def send(vk, peer_id: int, text: str, keyboard: str | None = None) -> None:

@@ -12,13 +12,22 @@ class ParticipantAdmin(admin.ModelAdmin):
     list_display = (
         "last_name",
         "first_name",
+        "goals_month",
         "goal_1",
         "goal_2",
         "goal_3",
         "vk_id",
     )
-    search_fields = ("last_name", "first_name", "goal_1", "goal_2", "goal_3", "vk_id")
-    list_filter = ("created_at", "last_name")
+    search_fields = (
+        "last_name",
+        "first_name",
+        "goal_1",
+        "goal_2",
+        "goal_3",
+        "goals_month",
+        "vk_id",
+    )
+    list_filter = ("created_at", "goals_month")
     readonly_fields = ("created_at",)
 
 
