@@ -1,12 +1,10 @@
-"""Состояния диалога.
-
-Строки, а не числа: в базе и логах сразу видно, что происходит.
-"""
+"""Состояния диалога. Строки, чтобы в логах было читаемо."""
 
 from __future__ import annotations
 
 IDLE = "IDLE"
 
-ONBOARD_HABIT = "ONBOARD_HABIT"
-ONBOARD_REFUSAL = "ONBOARD_REFUSAL"
+ONBOARD_GOAL = "ONBOARD_GOAL"
 ONBOARD_CONFIRM = "ONBOARD_CONFIRM"
+
+REPORTING = "REPORTING"

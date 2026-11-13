@@ -1,7 +1,4 @@
-"""Модели — описание таблиц базы данных обычным Python-кодом.
-
-Django сам создаёт таблицы по этим классам (команда `migrate`).
-"""
+"""Модели — описание таблиц базы данных обычным Python-кодом."""
 
 from __future__ import annotations
 
@@ -9,13 +6,14 @@ from django.db import models
 
 
 class Participant(models.Model):
-    """Участник бота. Одна запись — один человек ВКонтакте."""
+    """Участник и его рецепт дня из трёх целей."""
 
     vk_id = models.BigIntegerField("VK ID", unique=True)
     last_name = models.CharField("Фамилия", max_length=80, blank=True, default="")
     first_name = models.CharField("Имя", max_length=60, blank=True, default="")
-    habit = models.CharField("Привычка", max_length=200, blank=True, default="")
-    refusal = models.CharField("Отказ", max_length=200, blank=True, default="")
+    goal_1 = models.CharField("Цель 1", max_length=200, blank=True, default="")
+    goal_2 = models.CharField("Цель 2", max_length=200, blank=True, default="")
+    goal_3 = models.CharField("Цель 3", max_length=200, blank=True, default="")
     created_at = models.DateTimeField("Добавлен", auto_now_add=True)
 
     class Meta:
@@ -24,15 +22,20 @@ class Participant(models.Model):
         ordering = ["last_name", "first_name"]
 
     def __str__(self) -> str:
-        # Так запись выглядит в админке и в консоли.
         return f"{self.last_name} {self.first_name} ({self.vk_id})"
+
+    @property
+    def goals(self) -> list[str]:
+        """Три цели в виде списка — удобно перебирать."""
+        return [self.goal_1, self.goal_2, self.goal_3]
+
+    @property
+    def has_goals(self) -> bool:
+        return all(self.goals)
 
 
 class BotState(models.Model):
-    """Где сейчас находится человек в диалоге.
-
-    Живёт в базе, поэтому перезапуск бота не сбрасывает онбординг.
-    """
+    """Где сейчас находится человек в диалоге."""
 
     vk_id = models.BigIntegerField("VK ID", unique=True)
     state = models.CharField("Состояние", max_length=32, default="IDLE")
@@ -45,3 +48,37 @@ class BotState(models.Model):
 
     def __str__(self) -> str:
         return f"{self.vk_id}: {self.state}"
+
+
+class Report(models.Model):
+    """Отметка за день: какие из трёх целей выполнены."""
+
+    participant = models.ForeignKey(
+        Participant, on_delete=models.CASCADE, related_name="reports", verbose_name="Участник"
+    )
+    date = models.DateField("Дата")
+    goal_1_done = models.BooleanField("Цель 1 выполнена", default=False)
+    goal_2_done = models.BooleanField("Цель 2 выполнена", default=False)
+    goal_3_done = models.BooleanField("Цель 3 выполнена", default=False)
+    created_at = models.DateTimeField("Создан", auto_now_add=True)
+
+    class Meta:
+        verbose_name = "Отметка"
+        verbose_name_plural = "Отметки"
+        ordering = ["-date", "participant__last_name"]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["participant", "date"], name="unique_participant_date"
+            )
+        ]
+
+    def __str__(self) -> str:
+        return f"{self.participant} — {self.date}: {self.goals_done}/3"
+
+    @property
+    def goals_done(self) -> int:
+        return sum([self.goal_1_done, self.goal_2_done, self.goal_3_done])
+
+    @property
+    def completed(self) -> bool:
+        return self.goals_done == 3
