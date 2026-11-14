@@ -16,39 +16,20 @@ import logging
 from django.utils import timezone
 
 from app_tracker import keyboards, states
+from app_tracker.constants import GOAL_COUNT
 from app_tracker.models import BotState, Participant, Report
+from app_tracker.texts import (
+    HELP_TEXT,
+    goals_text,
+    month_label,
+    report_text,
+    report_title,
+)
 
 log = logging.getLogger(__name__)
 
 START_WORDS = {"/start", "начать", "start", "меню", "menu"}
 HELP_WORDS = {"/help", "помощь", "help", "инструкция"}
-GOAL_COUNT = 3
-
-HELP_TEXT = (
-    "Как пользоваться ботом:\n\n"
-    "• Цели ставятся на месяц — три цели.\n"
-    "• Каждый день жми «Отметиться» и отвечай «Да» или «Нет» по каждой цели.\n"
-    "• Если выполнены все три — кнопка исчезает до следующих суток.\n"
-    "• «Мои цели» — посмотреть цели, «Изменить цели» — поменять.\n\n"
-    "Команды:\n"
-    "/start — меню\n"
-    "/help — инструкция"
-)
-
-MONTHS = (
-    "январь",
-    "февраль",
-    "март",
-    "апрель",
-    "май",
-    "июнь",
-    "июль",
-    "август",
-    "сентябрь",
-    "октябрь",
-    "ноябрь",
-    "декабрь",
-)
 
 
 def handle_update(vk, update: dict) -> None:
@@ -166,7 +147,7 @@ def handle_command(
             send(
                 vk,
                 peer_id,
-                report_text(participant, report, title=_report_title(report, exists=True)),
+                report_text(participant, report, title=report_title(report, exists=True)),
                 keyboards.report_exists(),
             )
             return
@@ -230,11 +211,11 @@ def begin_onboarding(
         text = (
             f"{name}, давай обновим цели на {month}.\n\n"
             "Цель 1 из 3. Напиши первую цель.\n"
-            "Например: «активность 15 минут»."
+            "Например: «активность >15 минут»."
         )
     else:
         text = (
-            f"Привет, {name}! Я учебный бот.\n\n"
+            f"Привет, {name}! Я бот, я помогу тебе.\n\n"
             f"Давай поставим три цели на {month}. Их нужно выполнять каждый день.\n"
             "Например: «активность 15 минут», «зарядка после сна», "
             "«без сахара в кофе».\n\n"
@@ -359,7 +340,7 @@ def answer_report(
     send(
         vk,
         peer_id,
-        report_text(participant, report, title=_report_title(report, exists=False)),
+        report_text(participant, report, title=report_title(report, exists=False)),
         keyboards.main_menu(can_checkin=not report.completed),
     )
 
@@ -367,38 +348,10 @@ def answer_report(
 # --- Тексты ----------------------------------------------------------------
 
 
-def goals_text(goals: list[str], month_key: str = "") -> str:
-    """Форматирует три цели для сообщения, с месяцем или без."""
-    if month_key:
-        lines = [f"Цели на {month_label(month_key)}:"]
-    else:
-        lines = ["Твои цели:"]
-    for number, goal in enumerate(goals, start=1):
-        lines.append(f"{number}. {goal}")
-    return "\n".join(lines)
 
 
-def report_text(participant: Participant, report: Report, *, title: str) -> str:
-    """Форматирует карточку отметки: статусы целей и итог дня."""
-    marks = [report.goal_1_done, report.goal_2_done, report.goal_3_done]
-    lines = [title]
-    for number, goal in enumerate(participant.goals, start=1):
-        mark = "✅" if marks[number - 1] else "❌"
-        lines.append(f"{number}. {mark} {goal}")
-
-    lines.append("")
-    if report.completed:
-        lines.append("День выполнен!")
-    else:
-        lines.append(f"Выполнено {report.goals_done} из {GOAL_COUNT}.")
-    return "\n".join(lines)
 
 
-def _report_title(report: Report, *, exists: bool) -> str:
-    """Возвращает заголовок карточки: «Записал» или «Сегодня уже отмечено»."""
-    if exists:
-        return f"Сегодня уже отмечено: {report.goals_done} из {GOAL_COUNT}."
-    return f"Записал: {report.goals_done} из {GOAL_COUNT}."
 
 
 # --- Меню ------------------------------------------------------------------
@@ -468,13 +421,6 @@ def current_month() -> str:
     return timezone.localdate().strftime("%Y-%m")
 
 
-def month_label(month_key: str) -> str:
-    """Преобразует YYYY-MM в «ноябрь 2026» для текста."""
-    try:
-        year, month = month_key.split("-")
-        return f"{MONTHS[int(month) - 1]} {year}"
-    except (ValueError, IndexError):
-        return month_key
 
 
 # --- Служебное -------------------------------------------------------------
