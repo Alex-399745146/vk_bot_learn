@@ -1,6 +1,11 @@
 {% extends "base.html" %}
+{% load static %}
 
 {% block title %}Мои результаты · Дневник целей{% endblock %}
+
+{% block background %}
+  <canvas id="magma-particles" class="magma-canvas" aria-hidden="true"></canvas>
+{% endblock %}
 
 {% block content %}
   <div class="d-flex flex-wrap justify-content-between align-items-end gap-3 mb-4">
@@ -126,4 +131,8 @@
       {% endif %}
     </div>
   {% endif %}
+{% endblock %}
+
+{% block extra_scripts %}
+  <script src="{% static 'js/magma.js' %}" defer></script>
 {% endblock %}
