@@ -1,0 +1,83 @@
+{% extends "app_users/base.html" %}
+
+{% block title %}Мои результаты{% endblock %}
+
+{% block content %}
+  <h1>Мои результаты</h1>
+
+  {% if not participant %}
+    <div class="card">
+      <p>
+        Аккаунт не привязан к участнику бота. Напиши боту <strong>/start</strong>,
+        а затем зарегистрируйся заново с тем же VK ID.
+      </p>
+    </div>
+  {% else %}
+    <div class="card">
+      <h2>Цели на {{ goals_month_label }}</h2>
+      {% if goals %}
+        <ol class="goals">
+          {% for goal in goals %}<li>{{ goal }}</li>{% endfor %}
+        </ol>
+      {% else %}
+        <p class="muted">
+          На этот месяц цели не заданы. Напиши боту <strong>/start</strong>
+          и заполни их.
+        </p>
+      {% endif %}
+    </div>
+
+    <div class="card">
+      <h2>Сегодня</h2>
+      {% if today_report %}
+        <p>
+          Отмечено: <strong>{{ today_report.goals_done }} из 3</strong>.
+          {% if today_report.completed %}
+            <span class="ok">День выполнен.</span>
+          {% else %}
+            <span class="warn">Можно дополнить в боте.</span>
+          {% endif %}
+        </p>
+      {% else %}
+        <p class="muted">Отметки за сегодня нет. Напиши боту «Отметиться».</p>
+      {% endif %}
+    </div>
+
+    <div class="stats">
+      <div><span class="num">{{ month_total }}</span><span>дней отмечено</span></div>
+      <div><span class="num">{{ month_completed }}</span><span>выполнено полностью</span></div>
+      <div><span class="num">{{ month_partial }}</span><span>частично</span></div>
+      <div><span class="num">{{ streak }}</span><span>дней подряд</span></div>
+    </div>
+
+    <div class="card">
+      <h2>Последние отметки</h2>
+      {% if reports %}
+        <table>
+          <thead>
+            <tr>
+              <th>Дата</th>
+              <th>Цель 1</th>
+              <th>Цель 2</th>
+              <th>Цель 3</th>
+              <th>Итог</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for report in reports %}
+              <tr>
+                <td>{{ report.date|date:"d.m.Y" }}</td>
+                <td>{% if report.goal_1_done %}✅{% else %}❌{% endif %}</td>
+                <td>{% if report.goal_2_done %}✅{% else %}❌{% endif %}</td>
+                <td>{% if report.goal_3_done %}✅{% else %}❌{% endif %}</td>
+                <td>{{ report.goals_done }}/3</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      {% else %}
+        <p class="muted">Пока нет отметок.</p>
+      {% endif %}
+    </div>
+  {% endif %}
+{% endblock %}

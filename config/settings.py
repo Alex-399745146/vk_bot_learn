@@ -34,6 +34,7 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "app_tracker",
+    "app_users",
 ]
 
 MIDDLEWARE = [
@@ -92,6 +93,12 @@ USE_TZ = True
 
 STATIC_URL = "static/"
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
+# --- Вход в веб-часть -------------------------------------------------------
+
+LOGIN_URL = "login"
+LOGIN_REDIRECT_URL = "dashboard"
+LOGOUT_REDIRECT_URL = "login"
 
 # --- Настройки самого бота --------------------------------------------------
 

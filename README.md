@@ -46,6 +46,13 @@ app_tracker/
   migrations/
   management/commands/
     runbot.py
+app_users/
+  models.py             # Profile: User ↔ Participant
+  forms.py              # регистрация с VK ID
+  views.py              # регистрация и страница результатов
+  urls.py               # /, /register/, /login/, /logout/
+  templates/app_users/  # base, login, register, dashboard
+  tests.py
 manage.py
 bot.log
 db.sqlite3
@@ -69,6 +76,47 @@ python manage.py runserver
 ```
 
 `http://127.0.0.1:8000/admin/`
+
+---
+
+## Веб-кабинет
+
+Кроме бота есть веб-часть на встроенной аутентификации Django.
+
+```bash
+python manage.py runserver
+```
+
+| Адрес | Что там |
+|---|---|
+| `/register/` | регистрация |
+| `/login/` | вход |
+| `/logout/` | выход (POST-форма в шапке) |
+| `/` | «Мои результаты», только после входа |
+| `/admin/` | админка Django |
+
+### Как связать аккаунт с ботом
+
+Бот знает человека по `vk_id`. При регистрации нужно указать тот же VK ID:
+
+1. сначала напиши боту `/start`, чтобы появился `Participant`;
+2. открой `/register/`, задай логин, пароль и VK ID;
+3. создастся `User` и `Profile`, связанный с этим `Participant`;
+4. на `/` появятся цели, сегодняшняя отметка и последние результаты.
+
+Если VK ID не найден или уже привязан к другому аккаунту, форма покажет ошибку.
+
+> Это учебный проект для доверенной группы: владение VK ID не проверяется
+> через ВК. Для публичного запуска понадобится подтверждение через VK OAuth.
+
+### Тесты веб-части
+
+```bash
+python manage.py test app_users
+```
+
+Проверяются регистрация, привязка VK ID, защита страницы результатов и вывод
+отметок.
 
 ---
 
