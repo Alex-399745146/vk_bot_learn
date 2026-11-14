@@ -21,7 +21,19 @@ from app_tracker.models import BotState, Participant, Report
 log = logging.getLogger(__name__)
 
 START_WORDS = {"/start", "начать", "start", "меню", "menu"}
+HELP_WORDS = {"/help", "помощь", "help", "инструкция"}
 GOAL_COUNT = 3
+
+HELP_TEXT = (
+    "Как пользоваться ботом:\n\n"
+    "• Цели ставятся на месяц — три цели.\n"
+    "• Каждый день жми «Отметиться» и отвечай «Да» или «Нет» по каждой цели.\n"
+    "• Если выполнены все три — кнопка исчезает до следующих суток.\n"
+    "• «Мои цели» — посмотреть цели, «Изменить цели» — поменять.\n\n"
+    "Команды:\n"
+    "/start — меню\n"
+    "/help — эта справка"
+)
 
 MONTHS = (
     "январь",
@@ -79,7 +91,13 @@ def handle_update(vk, update: dict) -> None:
 
 
 def handle_text(vk, participant: Participant, state: BotState, peer_id: int, text: str) -> None:
-    if text.casefold() in START_WORDS:
+    normalized = text.casefold()
+
+    if normalized in HELP_WORDS:
+        show_help(vk, participant, state, peer_id)
+        return
+
+    if normalized in START_WORDS:
         if participant.has_goals:
             show_menu(vk, participant, state, peer_id)
         else:
@@ -401,6 +419,19 @@ def menu_keyboard(participant: Participant) -> str:
     report = today_report(participant)
     can_checkin = report is None or not report.completed
     return keyboards.main_menu(can_checkin=can_checkin)
+
+
+def show_help(vk, participant: Participant, state: BotState, peer_id: int) -> None:
+    reset_state(state)
+    if participant.has_goals:
+        send(vk, peer_id, HELP_TEXT, menu_keyboard(participant))
+    else:
+        send(
+            vk,
+            peer_id,
+            f"{HELP_TEXT}\n\nЧтобы начать, напиши /start.",
+            keyboards.empty_keyboard(),
+        )
 
 
 def current_month() -> str:
