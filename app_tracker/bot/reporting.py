@@ -4,20 +4,20 @@ from __future__ import annotations
 
 from django.utils import timezone
 
-from app_tracker import keyboards, states
-from app_tracker.constants import GOAL_COUNT
-from app_tracker.helpers import send
+from . import keyboards, states
+from .constants import GOAL_COUNT
+from .helpers import send
 from app_tracker.models import BotState, Participant, Report
-from app_tracker.screens import expired
-from app_tracker.storage import reset_state, set_state, today_report
-from app_tracker.texts import report_text, report_title
+from .screens import expired
+from .storage import reset_state, set_state, today_report
+from .texts import report_text, report_title
 
 
 def handle_checkin(vk, participant: Participant, state: BotState, peer_id: int) -> None:
     """Запускает отметку или сообщает, что день уже закрыт."""
     if not participant.has_goals:
         # Ленивый импорт: onboarding использует экраны, а экраны — его.
-        from app_tracker.onboarding import begin_onboarding
+        from .onboarding import begin_onboarding
 
         begin_onboarding(vk, participant, state, peer_id)
         return

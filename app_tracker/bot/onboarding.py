@@ -2,13 +2,13 @@
 
 from __future__ import annotations
 
-from app_tracker import keyboards, states
-from app_tracker.constants import GOAL_COUNT
-from app_tracker.helpers import current_month, send, validate_text
+from . import keyboards, states
+from .constants import GOAL_COUNT
+from .helpers import current_month, send, validate_text
 from app_tracker.models import BotState, Participant
-from app_tracker.screens import expired, show_menu
-from app_tracker.storage import set_state
-from app_tracker.texts import goals_text, month_label
+from .screens import expired, show_menu
+from .storage import set_state
+from .texts import goals_text, month_label
 
 
 def begin_onboarding(

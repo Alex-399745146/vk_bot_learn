@@ -29,18 +29,20 @@ config/                 # настройки Django
 app_tracker/
   models.py             # Participant, BotState, Report
   admin.py              # админка
-  bot.py                # только маршрутизация сообщений
-  onboarding.py         # ввод трёх целей
-  reporting.py          # ежедневная отметка
-  screens.py            # меню и справка
-  texts.py              # тексты и форматирование
-  storage.py            # работа с базой и состоянием
-  helpers.py            # отправка, проверки, дата, имя
-  constants.py          # GOAL_COUNT
-  vk.py                 # клиент ВК
-  states.py             # имена состояний
-  keyboards.py          # reply-клавиатуры
-  lock.py               # один экземпляр бота
+  bot/
+    __init__.py         # экспорт handle_update
+    router.py           # маршрутизация сообщений
+    onboarding.py       # ввод трёх целей
+    reporting.py        # ежедневная отметка
+    screens.py          # меню и справка
+    texts.py            # тексты и форматирование
+    storage.py          # работа с базой и состоянием
+    helpers.py          # отправка, проверки, дата, имя
+    constants.py        # GOAL_COUNT
+    vk.py               # клиент ВК
+    states.py           # имена состояний
+    keyboards.py        # reply-клавиатуры
+    lock.py             # один экземпляр бота
   migrations/
   management/commands/
     runbot.py
@@ -220,16 +222,16 @@ Reply-кнопка присылает текст и `payload`:
 
 | Файл | Что делает |
 |---|---|
-| `app_tracker/vk.py` | HTTP-клиент и LongPoll |
-| `app_tracker/bot.py` | маршрутизация: текст → сценарий |
-| `app_tracker/onboarding.py` | ввод и сохранение трёх целей |
-| `app_tracker/reporting.py` | вопросы Да/Нет и запись `Report` |
-| `app_tracker/screens.py` | меню, справка, устаревшие кнопки |
-| `app_tracker/texts.py` | тексты и форматирование |
-| `app_tracker/storage.py` | база и состояние диалога |
-| `app_tracker/helpers.py` | отправка, проверки, дата, имя |
-| `app_tracker/states.py` | константы состояний |
-| `app_tracker/keyboards.py` | JSON клавиатур |
+| `app_tracker/bot/vk.py` | HTTP-клиент и LongPoll |
+| `app_tracker/bot/router.py` | маршрутизация: текст → сценарий |
+| `app_tracker/bot/onboarding.py` | ввод и сохранение трёх целей |
+| `app_tracker/bot/reporting.py` | вопросы Да/Нет и запись `Report` |
+| `app_tracker/bot/screens.py` | меню, справка, устаревшие кнопки |
+| `app_tracker/bot/texts.py` | тексты и форматирование |
+| `app_tracker/bot/storage.py` | база и состояние диалога |
+| `app_tracker/bot/helpers.py` | отправка, проверки, дата, имя |
+| `app_tracker/bot/states.py` | константы состояний |
+| `app_tracker/bot/keyboards.py` | JSON клавиатур |
 | `app_tracker/models.py` | таблицы и свойства |
 | `admin.py` | просмотр данных |
 | `runbot.py` | запуск бота из Django |

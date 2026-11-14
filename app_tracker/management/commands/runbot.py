@@ -1,7 +1,7 @@
 """Запуск бота из Django: python manage.py runbot.
 
 Django нужен ради базы и админки. Цикл LongPoll остаётся обычным
-синхронным циклом, а транспорт лежит в app_tracker/vk.py.
+синхронным циклом, а транспорт лежит в app_tracker/bot/vk.py.
 """
 
 from __future__ import annotations
@@ -10,8 +10,8 @@ from django.conf import settings
 from django.core.management.base import BaseCommand, CommandError
 
 from app_tracker.bot import handle_update
-from app_tracker.lock import acquire_single_instance_lock
-from app_tracker.vk import VK
+from app_tracker.bot.lock import acquire_single_instance_lock
+from app_tracker.bot.vk import VK
 
 
 class Command(BaseCommand):

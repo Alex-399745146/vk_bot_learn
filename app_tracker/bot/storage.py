@@ -10,8 +10,8 @@ import logging
 
 from django.utils import timezone
 
-from app_tracker import states
-from app_tracker.helpers import fetch_user
+from . import states
+from .helpers import fetch_user
 from app_tracker.models import BotState, Participant, Report
 
 log = logging.getLogger(__name__)

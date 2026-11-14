@@ -13,13 +13,13 @@ from __future__ import annotations
 
 import logging
 
-from app_tracker import keyboards, states
-from app_tracker.helpers import send
+from . import keyboards, states
+from .helpers import send
 from app_tracker.models import BotState, Participant
-from app_tracker.onboarding import add_goal, begin_onboarding, confirm_goals
-from app_tracker.reporting import answer_report, handle_checkin, start_report
-from app_tracker.screens import expired, menu_keyboard, show_help, show_menu
-from app_tracker.storage import get_participant, payload_command, reset_state
+from .onboarding import add_goal, begin_onboarding, confirm_goals
+from .reporting import answer_report, handle_checkin, start_report
+from .screens import expired, menu_keyboard, show_help, show_menu
+from .storage import get_participant, payload_command, reset_state
 
 log = logging.getLogger(__name__)
 

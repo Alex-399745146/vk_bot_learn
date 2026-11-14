@@ -2,12 +2,12 @@
 
 from __future__ import annotations
 
-from app_tracker import keyboards
-from app_tracker.constants import GOAL_COUNT
-from app_tracker.helpers import send
+from . import keyboards
+from .constants import GOAL_COUNT
+from .helpers import send
 from app_tracker.models import BotState, Participant
-from app_tracker.storage import reset_state, today_report
-from app_tracker.texts import HELP_TEXT, goals_text
+from .storage import reset_state, today_report
+from .texts import HELP_TEXT, goals_text
 
 
 def show_menu(
@@ -21,7 +21,7 @@ def show_menu(
     """Показывает цели и меню; если целей нет — запускает онбординг. Учитывает отметку за сегодня."""
     if not participant.has_goals:
         # Ленивый импорт: onboarding сам использует show_menu.
-        from app_tracker.onboarding import begin_onboarding
+        from .onboarding import begin_onboarding
 
         begin_onboarding(vk, participant, state, peer_id)
         return

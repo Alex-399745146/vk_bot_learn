@@ -6,7 +6,7 @@
 
 from __future__ import annotations
 
-from app_tracker.constants import GOAL_COUNT
+from .constants import GOAL_COUNT
 
 HELP_TEXT = (
     "Как пользоваться ботом:\n\n"
