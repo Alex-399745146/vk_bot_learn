@@ -18,7 +18,7 @@
 - повторная отметка через «Изменить» или повторное «Отметиться»;
 - админка: участники, состояния, отметки.
 
-Этап 1 (эхо-бот) остался в `main.py` — для сравнения.
+История этапа 1 (эхо-бот без базы) осталась в git — в текущей версии его нет.
 
 ---
 
@@ -30,14 +30,13 @@ app_tracker/
   models.py             # Participant, BotState, Report
   admin.py              # админка
   bot.py                # меню, онбординг, отметка
+  vk.py                 # клиент ВК
   states.py             # имена состояний
   keyboards.py          # reply-клавиатуры
   lock.py               # один экземпляр бота
   migrations/
   management/commands/
     runbot.py
-vk.py                   # клиент ВК
-main.py                 # этап 1: эхо-бот
 manage.py
 bot.log
 db.sqlite3
@@ -209,7 +208,7 @@ Reply-кнопка присылает текст и `payload`:
 
 | Файл | Что делает |
 |---|---|
-| `vk.py` | HTTP-клиент и LongPoll |
+| `app_tracker/vk.py` | HTTP-клиент и LongPoll |
 | `bot.py` | сценарии и маршрутизация |
 | `states.py` | константы состояний |
 | `keyboards.py` | JSON клавиатур |
