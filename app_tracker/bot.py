@@ -32,7 +32,7 @@ HELP_TEXT = (
     "• «Мои цели» — посмотреть цели, «Изменить цели» — поменять.\n\n"
     "Команды:\n"
     "/start — меню\n"
-    "/help — эта справка"
+    "/help — инструкция"
 )
 
 MONTHS = (
@@ -91,6 +91,23 @@ def handle_update(vk, update: dict) -> None:
 
 
 def handle_text(vk, participant: Participant, state: BotState, peer_id: int, text: str) -> None:
+    """Обрабатывает текст отправляемый пользователем.
+
+    Порядок важен — проверки идут сверху вниз:
+
+    1. Справка: /help и «помощь» показывают инструкцию.
+    2. Старт: /start и «меню» показывают меню или запускают онбординг.
+    3. Текущее состояние:
+       - ONBOARD_GOAL — текст считается очередной целью;
+       - ONBOARD_CONFIRM — напоминаем нажать «Верно» или «Изменить»;
+       - REPORTING — напоминаем ответить «Да» или «Нет».
+    4. Всё остальное:
+       - целей нет — начинаем онбординг;
+       - цели есть — показываем меню с подсказкой.
+
+    Нажатия кнопок сюда не попадают: их разбирает handle_command()
+    по полю payload.
+    """
     normalized = text.casefold()
 
     if normalized in HELP_WORDS:
@@ -128,6 +145,7 @@ def handle_text(vk, participant: Participant, state: BotState, peer_id: int, tex
 def handle_command(
     vk, participant: Participant, state: BotState, peer_id: int, command: str
 ) -> None:
+    """Обрабатывает нажатие кнопки: получает cmd и вызывает нужный шаг сценария."""
     if command == "onb:ok":
         confirm_goals(vk, participant, state, peer_id)
         return
@@ -203,6 +221,7 @@ def begin_onboarding(
     *,
     edit: bool = False,
 ) -> None:
+    """Начинает или перезапускает ввод трёх целей и очищает черновик."""
     set_state(state, states.ONBOARD_GOAL, {"goals": []})
     name = participant.first_name or "друг"
     month = month_label(current_month())
@@ -232,6 +251,7 @@ def add_goal(
     peer_id: int,
     text: str,
 ) -> None:
+    """Принимает очередную цель, складывает её в BotState.data и после третьей показывает подтверждение."""
     error = validate_text(text)
     if error:
         send(vk, peer_id, error, keyboards.empty_keyboard())
@@ -261,6 +281,7 @@ def add_goal(
 
 
 def confirm_goals(vk, participant: Participant, state: BotState, peer_id: int) -> None:
+    """Сохраняет три цели в Participant, ставит текущий месяц и показывает меню."""
     if state.state != states.ONBOARD_CONFIRM:
         expired(vk, participant, peer_id)
         return
@@ -280,6 +301,7 @@ def confirm_goals(vk, participant: Participant, state: BotState, peer_id: int) -
 
 
 def start_report(vk, participant: Participant, state: BotState, peer_id: int) -> None:
+    """Начинает отметку дня: обнуляет индекс и результаты, задаёт первый вопрос."""
     set_state(state, states.REPORTING, {"index": 0, "results": []})
     ask_goal(vk, participant, state, peer_id, 0)
 
@@ -291,6 +313,7 @@ def ask_goal(
     peer_id: int,
     index: int,
 ) -> None:
+    """Отправляет вопрос по цели с номером index и кнопки «Да»/«Нет»."""
     goal = participant.goals[index]
     send(
         vk,
@@ -307,6 +330,7 @@ def answer_report(
     peer_id: int,
     done: bool,
 ) -> None:
+    """Принимает ответ по цели; после третьего сохраняет Report и показывает итог."""
     if state.state != states.REPORTING:
         expired(vk, participant, peer_id)
         return
@@ -344,6 +368,7 @@ def answer_report(
 
 
 def goals_text(goals: list[str], month_key: str = "") -> str:
+    """Форматирует три цели для сообщения, с месяцем или без."""
     if month_key:
         lines = [f"Цели на {month_label(month_key)}:"]
     else:
@@ -354,6 +379,7 @@ def goals_text(goals: list[str], month_key: str = "") -> str:
 
 
 def report_text(participant: Participant, report: Report, *, title: str) -> str:
+    """Форматирует карточку отметки: статусы целей и итог дня."""
     marks = [report.goal_1_done, report.goal_2_done, report.goal_3_done]
     lines = [title]
     for number, goal in enumerate(participant.goals, start=1):
@@ -369,6 +395,7 @@ def report_text(participant: Participant, report: Report, *, title: str) -> str:
 
 
 def _report_title(report: Report, *, exists: bool) -> str:
+    """Возвращает заголовок карточки: «Записал» или «Сегодня уже отмечено»."""
     if exists:
         return f"Сегодня уже отмечено: {report.goals_done} из {GOAL_COUNT}."
     return f"Записал: {report.goals_done} из {GOAL_COUNT}."
@@ -385,6 +412,7 @@ def show_menu(
     *,
     intro: str | None = None,
 ) -> None:
+    """Показывает цели и меню; если целей нет — запускает онбординг. Учитывает отметку за сегодня."""
     if not participant.has_goals:
         begin_onboarding(vk, participant, state, peer_id)
         return
@@ -422,6 +450,7 @@ def menu_keyboard(participant: Participant) -> str:
 
 
 def show_help(vk, participant: Participant, state: BotState, peer_id: int) -> None:
+    """Показывает справку и подходящую клавиатуру: меню или приглашение начать."""
     reset_state(state)
     if participant.has_goals:
         send(vk, peer_id, HELP_TEXT, menu_keyboard(participant))
@@ -435,10 +464,12 @@ def show_help(vk, participant: Participant, state: BotState, peer_id: int) -> No
 
 
 def current_month() -> str:
+    """Возвращает текущий месяц в формате YYYY-MM по часовому поясу проекта."""
     return timezone.localdate().strftime("%Y-%m")
 
 
 def month_label(month_key: str) -> str:
+    """Преобразует YYYY-MM в «ноябрь 2026» для текста."""
     try:
         year, month = month_key.split("-")
         return f"{MONTHS[int(month) - 1]} {year}"
@@ -450,6 +481,7 @@ def month_label(month_key: str) -> str:
 
 
 def get_participant(vk, vk_id: int) -> tuple[Participant, bool]:
+    """Находит участника по vk_id или создаёт его; заполняет пустые имя и фамилию."""
     user = fetch_user(vk, vk_id)
     participant, created = Participant.objects.get_or_create(vk_id=vk_id, defaults=user)
 
@@ -466,12 +498,14 @@ def get_participant(vk, vk_id: int) -> tuple[Participant, bool]:
 
 
 def today_report(participant: Participant) -> Report | None:
+    """Возвращает отметку за сегодня или None."""
     return Report.objects.filter(
         participant=participant, date=timezone.localdate()
     ).first()
 
 
 def payload_command(message: dict) -> str | None:
+    """Достаёт cmd из payload кнопки; возвращает None, если payload нет или он битый."""
     raw = message.get("payload")
     if not raw:
         return None
@@ -489,6 +523,7 @@ def payload_command(message: dict) -> str | None:
 
 
 def set_state(state: BotState, name: str, data: dict | None = None) -> None:
+    """Записывает состояние и данные шага в BotState."""
     log.debug("Состояние %s -> %s", state.state, name)
     state.state = name
     state.data = data or {}
@@ -496,10 +531,12 @@ def set_state(state: BotState, name: str, data: dict | None = None) -> None:
 
 
 def reset_state(state: BotState) -> None:
+    """Сбрасывает состояние в IDLE и очищает данные шага."""
     set_state(state, states.IDLE, {})
 
 
 def validate_text(text: str) -> str | None:
+    """Проверяет текст цели; возвращает текст ошибки или None, если всё в порядке."""
     if not text:
         return "Мне нужен текст."
     if text.startswith("/"):
@@ -510,10 +547,12 @@ def validate_text(text: str) -> str | None:
 
 
 def expired(vk, participant: Participant, peer_id: int) -> None:
+    """Отвечает на устаревшую кнопку и показывает актуальное меню."""
     send(vk, peer_id, "Это сообщение устарело.", menu_keyboard(participant))
 
 
 def send(vk, peer_id: int, text: str, keyboard: str | None = None) -> None:
+    """Отправляет сообщение через VK и пишет его в лог."""
     log.debug("Ответ в %s: %r", peer_id, text)
     vk.send_message(peer_id, text, keyboard=keyboard)
 
