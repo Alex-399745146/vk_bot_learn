@@ -125,7 +125,7 @@ def handle_command(
             begin_onboarding(vk, participant, state, peer_id)
             return
         report = today_report(participant)
-        if report is not None:
+        if report is not None and report.completed:
             send(
                 vk,
                 peer_id,
@@ -317,7 +317,7 @@ def answer_report(
         vk,
         peer_id,
         report_text(participant, report, title=_report_title(report, exists=False)),
-        keyboards.main_menu(can_checkin=False),
+        keyboards.main_menu(can_checkin=not report.completed),
     )
 
 
@@ -378,19 +378,28 @@ def show_menu(
         f"{goals_text(participant.goals, participant.goals_month)}"
     )
     if report is not None:
-        text += (
-            f"\n\nСегодня уже отмечено: {report.goals_done} из {GOAL_COUNT}. "
-            "Новая отметка будет доступна завтра."
-        )
+        if report.completed:
+            text += (
+                "\n\nСегодня все три цели выполнены. "
+                "Новая отметка будет доступна завтра."
+            )
+        else:
+            text += (
+                f"\n\nСегодня отмечено: {report.goals_done} из {GOAL_COUNT}. "
+                "Можно дополнить — нажми «Отметиться»."
+            )
     if intro:
         text = f"{intro}\n\n{text}"
 
-    send(vk, peer_id, text, keyboards.main_menu(can_checkin=report is None))
+    can_checkin = report is None or not report.completed
+    send(vk, peer_id, text, keyboards.main_menu(can_checkin=can_checkin))
 
 
 def menu_keyboard(participant: Participant) -> str:
-    """Меню без «Отметиться», если за сегодня уже есть отметка."""
-    return keyboards.main_menu(can_checkin=today_report(participant) is None)
+    """Меню без «Отметиться», только если все три цели выполнены."""
+    report = today_report(participant)
+    can_checkin = report is None or not report.completed
+    return keyboards.main_menu(can_checkin=can_checkin)
 
 
 def current_month() -> str:
