@@ -51,8 +51,10 @@ app_users/
   forms.py              # регистрация с VK ID
   views.py              # регистрация и страница результатов
   urls.py               # /, /register/, /login/, /logout/
-  templates/app_users/  # base, login, register, dashboard
+  templates/app_users/  # login, register, dashboard
   tests.py
+templates/
+  base.html             # общий шаблон Bootstrap 5 (тема «магма»)
 manage.py
 bot.log
 db.sqlite3
@@ -108,6 +110,18 @@ python manage.py runserver
 
 > Это учебный проект для доверенной группы: владение VK ID не проверяется
 > через ВК. Для публичного запуска понадобится подтверждение через VK OAuth.
+
+### Оформление
+
+- **Bootstrap 5** подключён через CDN в `templates/base.html`.
+- Общий шаблон лежит в корне: `templates/base.html`.
+- Страницы приложения — в `app_users/templates/app_users/`
+  (`login.html`, `register.html`, `dashboard.html`).
+- Тема — «магма / активный вулкан»: тёмный фон, оранжево-жёлтые акценты,
+  свечение и лёгкая анимация фона.
+
+Для работы оформления нужен интернет (CDN). Если понадобится офлайн-режим —
+скачай Bootstrap в `static/` и замени ссылку в `base.html`.
 
 ### Тесты веб-части
 

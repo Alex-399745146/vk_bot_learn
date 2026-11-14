@@ -1,16 +1,28 @@
-{% extends "app_users/base.html" %}
+{% extends "base.html" %}
 
-{% block title %}Вход{% endblock %}
+{% block title %}Вход · Дневник целей{% endblock %}
 
 {% block content %}
-  <div class="card" style="max-width: 420px; margin: 0 auto;">
-    <h1>Вход</h1>
-    <form method="post">
-      {% csrf_token %}
-      {{ form.as_p }}
-      <input type="hidden" name="next" value="{{ next }}">
-      <button type="submit" class="primary">Войти</button>
-    </form>
-    <p class="muted">Нет аккаунта? <a href="{% url 'register' %}">Зарегистрироваться</a></p>
+  <div class="row justify-content-center">
+    <div class="col-12 col-md-7 col-lg-5">
+      <div class="card card-magma p-4 p-md-5">
+        <h1 class="h3 magma-title mb-3">Вход</h1>
+        <p class="text-muted-magma mb-4">
+          Войди, чтобы посмотреть свои цели и результаты.
+        </p>
+
+        <form method="post" novalidate>
+          {% csrf_token %}
+          {{ form.as_p }}
+          <input type="hidden" name="next" value="{{ next }}">
+          <button type="submit" class="btn btn-magma w-100 mt-2">Войти</button>
+        </form>
+
+        <p class="text-muted-magma mt-4 mb-0">
+          Нет аккаунта?
+          <a href="{% url 'register' %}">Зарегистрироваться</a>
+        </p>
+      </div>
+    </div>
   </div>
 {% endblock %}

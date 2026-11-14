@@ -16,11 +16,12 @@ from django.utils.formats import date_format
 
 from app_tracker.models import Participant
 
-from .forms import RegisterForm
+from .forms import LoginForm, RegisterForm
 
 
 class UserLoginView(LoginView):
     template_name = "app_users/login.html"
+    authentication_form = LoginForm
     redirect_authenticated_user = True
 
 

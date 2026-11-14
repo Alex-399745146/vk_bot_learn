@@ -1,82 +1,128 @@
-{% extends "app_users/base.html" %}
+{% extends "base.html" %}
 
-{% block title %}Мои результаты{% endblock %}
+{% block title %}Мои результаты · Дневник целей{% endblock %}
 
 {% block content %}
-  <h1>Мои результаты</h1>
+  <div class="d-flex flex-wrap justify-content-between align-items-end gap-3 mb-4">
+    <div>
+      <h1 class="h2 magma-title mb-1">Мои результаты</h1>
+      <p class="text-muted-magma mb-0">Цели, отметки и серия дней</p>
+    </div>
+  </div>
 
   {% if not participant %}
-    <div class="card">
-      <p>
-        Аккаунт не привязан к участнику бота. Напиши боту <strong>/start</strong>,
-        а затем зарегистрируйся заново с тем же VK ID.
-      </p>
+    <div class="alert alert-magma">
+      Аккаунт не привязан к участнику бота. Напиши боту
+      <strong>/start</strong>, а затем зарегистрируйся заново с тем же VK ID.
     </div>
   {% else %}
-    <div class="card">
-      <h2>Цели на {{ goals_month_label }}</h2>
-      {% if goals %}
-        <ol class="goals">
-          {% for goal in goals %}<li>{{ goal }}</li>{% endfor %}
-        </ol>
-      {% else %}
-        <p class="muted">
-          На этот месяц цели не заданы. Напиши боту <strong>/start</strong>
-          и заполни их.
-        </p>
-      {% endif %}
-    </div>
+    <div class="row g-4 mb-4">
+      <div class="col-12 col-lg-7">
+        <div class="card card-magma h-100 p-4">
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <h2 class="h5 mb-0">Цели на {{ goals_month_label }}</h2>
+            <span class="badge badge-magma">3 цели</span>
+          </div>
 
-    <div class="card">
-      <h2>Сегодня</h2>
-      {% if today_report %}
-        <p>
-          Отмечено: <strong>{{ today_report.goals_done }} из 3</strong>.
-          {% if today_report.completed %}
-            <span class="ok">День выполнен.</span>
+          {% if goals %}
+            <ol class="list-group list-group-numbered list-group-magma">
+              {% for goal in goals %}
+                <li class="list-group-item px-0">{{ goal }}</li>
+              {% endfor %}
+            </ol>
           {% else %}
-            <span class="warn">Можно дополнить в боте.</span>
+            <p class="text-muted-magma mb-0">
+              На этот месяц цели не заданы. Напиши боту <strong>/start</strong>
+              и заполни их.
+            </p>
           {% endif %}
-        </p>
-      {% else %}
-        <p class="muted">Отметки за сегодня нет. Напиши боту «Отметиться».</p>
-      {% endif %}
+        </div>
+      </div>
+
+      <div class="col-12 col-lg-5">
+        <div class="card card-magma h-100 p-4">
+          <h2 class="h5 mb-3">Сегодня</h2>
+          {% if today_report %}
+            <p class="mb-2">
+              Отмечено:
+              <strong>{{ today_report.goals_done }} из 3</strong>
+            </p>
+            {% if today_report.completed %}
+              <span class="badge text-bg-success">День выполнен</span>
+            {% else %}
+              <span class="badge text-bg-warning">Можно дополнить в боте</span>
+            {% endif %}
+          {% else %}
+            <p class="text-muted-magma mb-0">
+              Отметки за сегодня нет. Напиши боту «Отметиться».
+            </p>
+          {% endif %}
+        </div>
+      </div>
     </div>
 
-    <div class="stats">
-      <div><span class="num">{{ month_total }}</span><span>дней отмечено</span></div>
-      <div><span class="num">{{ month_completed }}</span><span>выполнено полностью</span></div>
-      <div><span class="num">{{ month_partial }}</span><span>частично</span></div>
-      <div><span class="num">{{ streak }}</span><span>дней подряд</span></div>
+    <div class="row g-3 mb-4">
+      <div class="col-6 col-lg-3">
+        <div class="stat-card">
+          <div class="stat-value">{{ month_total }}</div>
+          <div class="stat-label">дней отмечено</div>
+        </div>
+      </div>
+      <div class="col-6 col-lg-3">
+        <div class="stat-card">
+          <div class="stat-value">{{ month_completed }}</div>
+          <div class="stat-label">выполнено полностью</div>
+        </div>
+      </div>
+      <div class="col-6 col-lg-3">
+        <div class="stat-card">
+          <div class="stat-value">{{ month_partial }}</div>
+          <div class="stat-label">частично</div>
+        </div>
+      </div>
+      <div class="col-6 col-lg-3">
+        <div class="stat-card">
+          <div class="stat-value">{{ streak }}</div>
+          <div class="stat-label">дней подряд</div>
+        </div>
+      </div>
     </div>
 
-    <div class="card">
-      <h2>Последние отметки</h2>
+    <div class="card card-magma p-4">
+      <h2 class="h5 mb-3">Последние отметки</h2>
       {% if reports %}
-        <table>
-          <thead>
-            <tr>
-              <th>Дата</th>
-              <th>Цель 1</th>
-              <th>Цель 2</th>
-              <th>Цель 3</th>
-              <th>Итог</th>
-            </tr>
-          </thead>
-          <tbody>
-            {% for report in reports %}
+        <div class="table-responsive">
+          <table class="table table-magma table-hover align-middle mb-0">
+            <thead>
               <tr>
-                <td>{{ report.date|date:"d.m.Y" }}</td>
-                <td>{% if report.goal_1_done %}✅{% else %}❌{% endif %}</td>
-                <td>{% if report.goal_2_done %}✅{% else %}❌{% endif %}</td>
-                <td>{% if report.goal_3_done %}✅{% else %}❌{% endif %}</td>
-                <td>{{ report.goals_done }}/3</td>
+                <th>Дата</th>
+                <th>Цель 1</th>
+                <th>Цель 2</th>
+                <th>Цель 3</th>
+                <th class="text-end">Итог</th>
               </tr>
-            {% endfor %}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {% for report in reports %}
+                <tr>
+                  <td>{{ report.date|date:"d.m.Y" }}</td>
+                  <td>{% if report.goal_1_done %}✅{% else %}❌{% endif %}</td>
+                  <td>{% if report.goal_2_done %}✅{% else %}❌{% endif %}</td>
+                  <td>{% if report.goal_3_done %}✅{% else %}❌{% endif %}</td>
+                  <td class="text-end">
+                    {% if report.completed %}
+                      <span class="badge text-bg-success">3/3</span>
+                    {% else %}
+                      <span class="badge text-bg-secondary">{{ report.goals_done }}/3</span>
+                    {% endif %}
+                  </td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
       {% else %}
-        <p class="muted">Пока нет отметок.</p>
+        <p class="text-muted-magma mb-0">Пока нет отметок.</p>
       {% endif %}
     </div>
   {% endif %}

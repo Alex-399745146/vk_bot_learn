@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from django import forms
-from django.contrib.auth.forms import UserCreationForm
+from django.contrib.auth.forms import AuthenticationForm, UserCreationForm
 from django.contrib.auth.models import User
 
 from app_tracker.models import Participant
@@ -11,7 +11,24 @@ from app_tracker.models import Participant
 from .models import Profile
 
 
-class RegisterForm(UserCreationForm):
+class BootstrapFormMixin:
+    """Добавляет Bootstrap-классы всем полям формы."""
+
+    def __init__(self, *args, **kwargs) -> None:
+        super().__init__(*args, **kwargs)
+        for field in self.fields.values():
+            if isinstance(field.widget, forms.CheckboxInput):
+                css = "form-check-input"
+            else:
+                css = "form-control"
+            field.widget.attrs["class"] = f"{field.widget.attrs.get('class', '')} {css}".strip()
+
+
+class LoginForm(BootstrapFormMixin, AuthenticationForm):
+    pass
+
+
+class RegisterForm(BootstrapFormMixin, UserCreationForm):
     vk_id = forms.IntegerField(
         label="VK ID",
         help_text="Числовой ID твоей страницы ВКонтакте. Должен совпадать с тем, "
