@@ -16,7 +16,7 @@ class Participant(models.Model):
     first_name = models.CharField("Имя", max_length=60, blank=True, default="")
 
     photo_id = models.CharField("ID фото ВК", max_length=100, blank=True, default="")
-    photo_url = models.URLField("URL фото 200px", max_length=255, blank=True, default="")
+    photo_url = models.URLField("URL фото 200px", max_length=500, blank=True, default="")
     sex = models.SmallIntegerField(
         "Пол",
         choices=[(0, "—"), (1, "Ж"), (2, "М")],

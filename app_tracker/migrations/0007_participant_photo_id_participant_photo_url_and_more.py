@@ -6,7 +6,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('app_tracker', '0005_participant_goals_month'),
+        ('app_tracker', '0006_report_is_chill'),
     ]
 
     operations = [
@@ -18,7 +18,7 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='participant',
             name='photo_url',
-            field=models.URLField(blank=True, default='', max_length=255, verbose_name='URL фото 200px'),
+            field=models.URLField(blank=True, default='', max_length=500, verbose_name='URL фото 200px'),
         ),
         migrations.AddField(
             model_name='participant',
