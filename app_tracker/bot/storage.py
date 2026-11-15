@@ -18,9 +18,10 @@ log = logging.getLogger(__name__)
 
 
 def get_participant(vk, vk_id: int) -> tuple[Participant, bool]:
-    """Находит участника по vk_id или создаёт его; заполняет пустые имя и фамилию."""
+    """Находит участника по vk_id или создаёт его; обновляет имя, фото и пол."""
     user = fetch_user(vk, vk_id)
-    participant, created = Participant.objects.get_or_create(vk_id=vk_id, defaults=user)
+    defaults = {"last_name": user["last_name"], "first_name": user["first_name"]}
+    participant, created = Participant.objects.get_or_create(vk_id=vk_id, defaults=defaults)
 
     if not created:
         changed: list[str] = []
@@ -31,6 +32,7 @@ def get_participant(vk, vk_id: int) -> tuple[Participant, bool]:
         if changed:
             participant.save(update_fields=changed)
 
+    update_participant_profile(participant, user)
     return participant, created
 
 
@@ -98,15 +100,30 @@ def reset_state(state: BotState) -> None:
 
 
 def update_participant_profile(participant, vk_data: dict) -> None:
-    """Обновляет данные профиля (фото и пол) на основе ответа от VK."""
+    """Обновляет фото и пол из ответа ВК; пишет в базу только изменения."""
     if not vk_data:
         return
 
-    participant.photo_id = vk_data.get("photo_id", "")
-    participant.sex = vk_data.get("sex", 0)
+    changed: list[str] = []
 
-    photo_200 = vk_data.get("photo_200")
-    if photo_200:
-        participant.photo_url = photo_200
+    photo_id = str(vk_data.get("photo_id") or "")
+    if participant.photo_id != photo_id:
+        participant.photo_id = photo_id
+        changed.append("photo_id")
 
-    participant.save(update_fields=["photo_id", "sex", "photo_url"])
+    try:
+        sex = int(vk_data.get("sex") or 0)
+    except (TypeError, ValueError):
+        sex = 0
+    if participant.sex != sex:
+        participant.sex = sex
+        changed.append("sex")
+
+    # photo_200 приходит из ВК, photo_url — из нормализованного fetch_user.
+    photo_url = str(vk_data.get("photo_url") or vk_data.get("photo_200") or "")
+    if photo_url and participant.photo_url != photo_url:
+        participant.photo_url = photo_url
+        changed.append("photo_url")
+
+    if changed:
+        participant.save(update_fields=changed)
