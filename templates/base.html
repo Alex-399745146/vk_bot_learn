@@ -111,6 +111,82 @@
       text-shadow: 0 0 14px rgba(255, 183, 3, .35);
     }
 
+    /* Анкета участника: круглое фото в градиентной рамке */
+    .profile-card {
+      display: flex;
+      align-items: center;
+      gap: 1.5rem;
+    }
+
+    .profile-body { min-width: 0; }
+
+    .profile-avatar-ring {
+      flex: 0 0 auto;
+      padding: 4px;
+      border-radius: 50%;
+      background: linear-gradient(140deg, #ff5a1f 0%, #ffb703 48%, #ff2d55 100%);
+      box-shadow:
+        0 0 0 1px rgba(255, 255, 255, .08),
+        0 0 34px rgba(255, 90, 31, .40);
+    }
+
+    .profile-avatar {
+      display: block;
+      width: 104px;
+      height: 104px;
+      border-radius: 50%;
+      object-fit: cover;
+      background: var(--magma-surface-solid);
+      transition: transform .25s ease;
+    }
+
+    .profile-avatar-ring:hover .profile-avatar { transform: scale(1.04); }
+
+    .profile-avatar-fallback {
+      display: grid;
+      place-items: center;
+      font-size: 2.7rem;
+      font-weight: 800;
+      color: #2a0f07;
+      background: linear-gradient(150deg, #ffd166, #ff7a1f);
+      user-select: none;
+    }
+
+    .gender-badge {
+      display: inline-grid;
+      place-items: center;
+      width: 2rem;
+      height: 2rem;
+      border-radius: 50%;
+      font-size: 1.1rem;
+      font-weight: 700;
+      line-height: 1;
+      border: 1px solid rgba(255, 255, 255, .18);
+      box-shadow: 0 4px 14px rgba(0, 0, 0, .35);
+    }
+
+    .gender-female {
+      color: #ffe1ef;
+      background: linear-gradient(150deg, rgba(255, 64, 129, .55), rgba(255, 122, 182, .20));
+      border-color: rgba(255, 122, 182, .50);
+    }
+
+    .gender-male {
+      color: #e0f0ff;
+      background: linear-gradient(150deg, rgba(59, 130, 246, .55), rgba(96, 165, 250, .20));
+      border-color: rgba(96, 165, 250, .50);
+    }
+
+    .gender-unknown {
+      color: var(--magma-muted);
+      background: rgba(255, 255, 255, .06);
+    }
+
+    @media (max-width: 575.98px) {
+      .profile-card { flex-direction: column; text-align: center; }
+      .profile-avatar { width: 88px; height: 88px; }
+    }
+
     .btn-magma {
       background: linear-gradient(135deg, var(--magma-primary), var(--magma-primary-2));
       border: 0;
