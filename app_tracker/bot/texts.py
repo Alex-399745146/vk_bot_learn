@@ -46,6 +46,22 @@ def goals_text(goals: list[str], month_key: str = "") -> str:
     return "\n".join(lines)
 
 
+GOAL_EMOJI = ("1️⃣", "2️⃣", "3️⃣")
+
+
+def goals_bulletin(goals: list[str], month_key: str = "") -> str:
+    """Блок целей для карточки: эмодзи-номера и месяц."""
+    title = (
+        f"🎯 Цели на {month_label(month_key)}:"
+        if month_key
+        else "🎯 Твои цели:"
+    )
+    lines = [title]
+    for emoji, goal in zip(GOAL_EMOJI, goals):
+        lines.append(f"{emoji} {goal}")
+    return "\n".join(lines)
+
+
 def report_text(participant, report, *, title: str) -> str:
     """Форматирует карточку отметки: статусы целей и итог дня."""
     marks = [report.goal_1_done, report.goal_2_done, report.goal_3_done]

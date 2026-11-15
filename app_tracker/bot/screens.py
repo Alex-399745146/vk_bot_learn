@@ -3,11 +3,11 @@
 from __future__ import annotations
 
 from . import keyboards
-from .constants import CHILL_LIMIT, GOAL_COUNT
+from .constants import CHILL_LIMIT
 from .helpers import send
 from app_tracker.models import BotState, Participant
 from .storage import chill_count, month_points, reset_state, today_report
-from .texts import HELP_TEXT, goals_text, month_label
+from .texts import HELP_TEXT, goals_bulletin
 
 
 def _menu_flags(
@@ -41,32 +41,7 @@ def show_menu(
     report = today_report(participant)
     can_checkin, chill_left, chill_used = _menu_flags(participant, report)
     points = month_points(participant)
-    name = participant.first_name or "друг"
-    text = (
-        f"Привет, {name}!\n\n"
-        f"{goals_text(participant.goals, participant.goals_month)}\n\n"
-        f"Баллы за {month_label(participant.goals_month)}: {points}."
-    )
-    if report is not None:
-        if report.is_chill:
-            text += (
-                f"\n\nСегодня Chill — отметка закрыта до завтра. "
-                f"Chill за месяц: {chill_used} из {CHILL_LIMIT}."
-            )
-        elif report.completed:
-            text += (
-                "\n\nСегодня все три цели выполнены. "
-                "Новая отметка будет доступна завтра."
-            )
-        else:
-            text += (
-                f"\n\nСегодня отмечено: {report.goals_done} из {GOAL_COUNT}. "
-                "Можно дополнить — нажми «Отметиться»."
-            )
-    elif chill_left:
-        text += f"\n\nChill: {chill_left} из {CHILL_LIMIT}."
-    if intro:
-        text = f"{intro}\n\n{text}"
+    text = _menu_card(participant, report, points, chill_used, chill_left, intro)
 
     send(
         vk,
@@ -74,6 +49,46 @@ def show_menu(
         text,
         keyboards.main_menu(can_checkin=can_checkin, chill_left=chill_left),
     )
+
+
+def _menu_card(
+    participant: Participant,
+    report,
+    points: int,
+    chill_used: int,
+    chill_left: int,
+    intro: str | None = None,
+) -> str:
+    """Собирает карточку-бюллетень для раздела «Мои цели»."""
+    lines = ["🌋 ТВОЙ ДНЕВНИК", "──────────────"]
+
+    if intro:
+        lines += [f"✨ {intro}", ""]
+
+    lines += [
+        goals_bulletin(participant.goals, participant.goals_month),
+        "",
+        "📊 Итоги месяца",
+        f"⭐ Баллы: {points}",
+    ]
+
+    if report is None:
+        lines.append(f"❄️ Chill: доступно {chill_left} из {CHILL_LIMIT}")
+    else:
+        lines.append(f"❄️ Chill: использовано {chill_used} из {CHILL_LIMIT}")
+
+    lines.append("")
+
+    if report is None:
+        lines.append("⏳ Сегодня ещё не отмечено · время до 01:00")
+    elif report.is_chill:
+        lines.append("🌀 Сегодня Chill · отметка закрыта до завтра")
+    elif report.completed:
+        lines.append("✅ Сегодня все три цели выполнены · новая отметка завтра")
+    else:
+        lines.append(f"🟡 Сегодня отмечено {report.goals_done} из 3 · можно дополнить")
+
+    return "\n".join(lines)
 
 
 def menu_keyboard(participant: Participant) -> str:
