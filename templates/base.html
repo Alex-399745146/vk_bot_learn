@@ -1,3 +1,4 @@
+{% load static %}
 <!doctype html>
 <html lang="ru">
 <head>
@@ -70,6 +71,49 @@
     .magma-navbar .nav-link,
     .magma-navbar .navbar-text { color: var(--magma-muted); }
     .magma-navbar .nav-link:hover { color: #fff; }
+
+    /* Эмблема и девиз движения в шапке */
+    .brand-motto-title {
+      font-weight: 900;
+      font-size: .95rem;
+      line-height: 1.1;
+      letter-spacing: .14em;
+      text-transform: uppercase;
+      background: linear-gradient(90deg, #fff3cf 0%, #ffd166 28%, #ff8a1f 62%, #ff3d00 100%);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+      filter: drop-shadow(0 0 10px rgba(255, 90, 31, .45));
+      white-space: nowrap;
+    }
+
+    .brand-motto-sub {
+      font-size: .66rem;
+      line-height: 1.1;
+      letter-spacing: .2em;
+      text-transform: uppercase;
+      color: #ffbf95;
+      white-space: nowrap;
+    }
+
+    .brand-emblem {
+      width: 52px;
+      height: 52px;
+      object-fit: contain;
+      /* Эмблема в JPEG на чёрном фоне: screen убирает чёрный квадрат. */
+      mix-blend-mode: screen;
+      filter: drop-shadow(0 0 14px rgba(255, 90, 31, .55));
+      transition: transform .25s ease, filter .25s ease;
+    }
+
+    .brand-emblem-link:hover .brand-emblem {
+      transform: scale(1.06);
+      filter: drop-shadow(0 0 20px rgba(255, 120, 30, .85));
+    }
+
+    @media (max-width: 991.98px) {
+      .brand-emblem { width: 42px; height: 42px; }
+    }
 
     main { position: relative; z-index: 1; }
 
@@ -338,6 +382,24 @@
         {% else %}
           <a class="btn btn-outline-magma btn-sm" href="{% url 'login' %}">Войти</a>
         {% endif %}
+
+        <div class="brand-motto d-flex align-items-center gap-2">
+          <div class="brand-motto-text d-none d-lg-block text-end">
+            <div class="brand-motto-title">ГОРЯЧИЙ РАЗГОН</div>
+            <div class="brand-motto-sub">Челлендж и комьюнити</div>
+          </div>
+          <a
+            class="brand-emblem-link"
+            href="{% url 'dashboard' %}"
+            aria-label="Горячий разгон — на главную"
+          >
+            <img
+              class="brand-emblem"
+              src="{% static 'img/emblem.jpg' %}"
+              alt="Эмблема «Горячий разгон»"
+            >
+          </a>
+        </div>
       </div>
     </div>
   </nav>
