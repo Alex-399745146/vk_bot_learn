@@ -86,10 +86,29 @@
       background: var(--magma-surface);
       border: 1px solid var(--magma-border);
       border-radius: 1rem;
+      /* Bootstrap .card ставит свой тёмный --bs-body-color — на магме он не виден. */
+      color: var(--magma-text);
+      --bs-heading-color: var(--magma-text);
       box-shadow:
         0 18px 45px rgba(0, 0, 0, .38),
         inset 0 1px 0 rgba(255, 255, 255, .05);
       backdrop-filter: blur(8px);
+    }
+
+    /* Яркие заголовки внутри карточек: «Цели на…», «Сегодня», «Последние отметки» */
+    .card-title-magma {
+      color: #fff;
+      font-weight: 700;
+      letter-spacing: .01em;
+      text-shadow: 0 0 18px rgba(255, 120, 40, .38);
+    }
+
+    /* Акцентное значение внутри текста: «3 из 3» */
+    .value-magma {
+      color: var(--magma-primary-2);
+      font-weight: 800;
+      font-size: 1.08em;
+      text-shadow: 0 0 14px rgba(255, 183, 3, .35);
     }
 
     .btn-magma {
@@ -153,8 +172,8 @@
     }
 
     .table-magma thead th {
-      color: var(--magma-muted);
-      font-weight: 600;
+      color: #ffd8a8;
+      font-weight: 700;
       font-size: .82rem;
       text-transform: uppercase;
       letter-spacing: .04em;
@@ -241,12 +260,10 @@
     <div class="container">
       <a class="navbar-brand" href="{% url 'dashboard' %}">🌋 Дневник целей</a>
 
-      <div class="d-flex align-items-center gap-3 ms-auto">
+      <div class="d-flex align-items-center gap-2 ms-auto">
+        <a class="btn btn-outline-magma btn-sm" href="/admin/">Админка</a>
         {% if user.is_authenticated %}
-          {% if user.is_staff %}
-            <a class="nav-link d-none d-md-inline" href="/admin/">Админка</a>
-          {% endif %}
-          <span class="navbar-text text-muted-magma">{{ user.username }}</span>
+          <span class="navbar-text text-muted-magma d-none d-sm-inline">{{ user.username }}</span>
           <form method="post" action="{% url 'logout' %}" class="m-0">
             {% csrf_token %}
             <button type="submit" class="btn btn-outline-magma btn-sm">Выйти</button>

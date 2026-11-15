@@ -34,9 +34,20 @@ class ReportAdmin(admin.ModelAdmin):
 
 @admin.register(BotState)
 class BotStateAdmin(admin.ModelAdmin):
+    """Техническое состояние диалога: нужно для отладки, а не для работы.
+
+    В списке приложения модель скрыта, чтобы не путаться с данными
+    участников. Открыть её можно по прямой ссылке:
+    /admin/app_tracker/botstate/
+    """
+
     list_display = ("vk_id", "state", "updated_at")
     list_filter = ("state",)
     readonly_fields = ("vk_id", "state", "data", "updated_at")
+
+    def get_model_perms(self, request) -> dict:
+        """Пустой dict убирает модель из списка на главной странице админки."""
+        return {}
 
     def has_add_permission(self, request) -> bool:
         return False

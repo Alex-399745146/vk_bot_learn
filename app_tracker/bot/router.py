@@ -16,7 +16,7 @@ import logging
 from . import keyboards, states
 from .helpers import send
 from app_tracker.models import BotState, Participant
-from .onboarding import add_goal, begin_onboarding, confirm_goals
+from .onboarding import add_goal, begin_onboarding, confirm_goals, go_back
 from .reporting import answer_report, confirm_chill, handle_checkin, handle_chill, start_report
 from .screens import expired, menu_keyboard, show_help, show_menu
 from .storage import get_participant, payload_command, reset_state
@@ -99,7 +99,12 @@ def handle_text(vk, participant: Participant, state: BotState, peer_id: int, tex
         return
 
     if state.state == states.ONBOARD_CONFIRM:
-        send(vk, peer_id, "Нажми «Верно» или «Изменить».", keyboards.goals_confirm())
+        send(
+            vk,
+            peer_id,
+            "Нажми «Верно», «Изменить» или «Назад».",
+            keyboards.goals_confirm(),
+        )
         return
 
     if state.state == states.REPORTING:
@@ -125,6 +130,10 @@ def handle_command(
     vk, participant: Participant, state: BotState, peer_id: int, command: str
 ) -> None:
     """Обрабатывает нажатие кнопки: получает cmd и вызывает нужный шаг сценария."""
+    if command == "onb:back":
+        go_back(vk, participant, state, peer_id)
+        return
+
     if command == "onb:ok":
         confirm_goals(vk, participant, state, peer_id)
         return
@@ -157,6 +166,10 @@ def handle_command(
 
     if command == "menu:edit":
         begin_onboarding(vk, participant, state, peer_id, edit=True)
+        return
+
+    if command == "menu:help":
+        show_help(vk, participant, state, peer_id)
         return
 
     if command == "menu:cancel":

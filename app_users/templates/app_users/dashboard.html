@@ -25,16 +25,16 @@
       <div class="col-12 col-lg-7">
         <div class="card card-magma h-100 p-4">
           <div class="d-flex justify-content-between align-items-center mb-3">
-            <h2 class="h5 mb-0">Цели на {{ goals_month_label }}</h2>
+            <h2 class="h5 mb-0 card-title-magma">Цели на {{ goals_month_label }}</h2>
             <span class="badge badge-magma">3 цели</span>
           </div>
 
           {% if goals %}
-            <ol class="list-group list-group-numbered list-group-magma">
+            <ul class="list-group list-group-numbered list-group-magma">
               {% for goal in goals %}
                 <li class="list-group-item px-0">{{ goal }}</li>
               {% endfor %}
-            </ol>
+            </ul>
           {% else %}
             <p class="text-muted-magma mb-0">
               На этот месяц цели не заданы. Напиши боту <strong>/start</strong>
@@ -46,7 +46,7 @@
 
       <div class="col-12 col-lg-5">
         <div class="card card-magma h-100 p-4">
-          <h2 class="h5 mb-3">Сегодня</h2>
+          <h2 class="h5 mb-3 card-title-magma">Сегодня</h2>
           {% if today_report %}
             {% if today_report.is_chill %}
               <p class="mb-2">Сегодня Chill — отметка закрыта до завтра.</p>
@@ -54,7 +54,7 @@
             {% else %}
               <p class="mb-2">
                 Отмечено:
-                <strong>{{ today_report.goals_done }} из 3</strong>
+                <strong class="value-magma">{{ today_report.goals_done }} из 3</strong>
               </p>
               {% if today_report.completed %}
                 <span class="badge text-bg-success">День выполнен</span>
@@ -105,7 +105,7 @@
     </div>
 
     <div class="card card-magma p-4">
-      <h2 class="h5 mb-3">Последние отметки</h2>
+      <h2 class="h5 mb-3 card-title-magma">Последние отметки</h2>
       {% if reports %}
         <div class="table-responsive">
           <table class="table table-magma table-hover align-middle mb-0">
