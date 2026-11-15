@@ -17,7 +17,7 @@ from . import keyboards, states
 from .helpers import send
 from app_tracker.models import BotState, Participant
 from .onboarding import add_goal, begin_onboarding, confirm_goals
-from .reporting import answer_report, handle_checkin, start_report
+from .reporting import answer_report, confirm_chill, handle_checkin, handle_chill, start_report
 from .screens import expired, menu_keyboard, show_help, show_menu
 from .storage import get_participant, payload_command, reset_state
 
@@ -106,6 +106,15 @@ def handle_text(vk, participant: Participant, state: BotState, peer_id: int, tex
         send(vk, peer_id, "Ответь кнопкой «Да» или «Нет».", keyboards.yes_no())
         return
 
+    if state.state == states.CHILL_CONFIRM:
+        send(
+            vk,
+            peer_id,
+            "Нажми «Передумал» или «Продолжить».",
+            keyboards.chill_warning(),
+        )
+        return
+
     if not participant.has_goals:
         begin_onboarding(vk, participant, state, peer_id)
     else:
@@ -129,6 +138,14 @@ def handle_command(
 
     if command == "menu:checkin":
         handle_checkin(vk, participant, state, peer_id)
+        return
+
+    if command == "chill:start":
+        handle_chill(vk, participant, state, peer_id)
+        return
+
+    if command == "chill:ok":
+        confirm_chill(vk, participant, state, peer_id)
         return
 
     if command == "menu:goals":

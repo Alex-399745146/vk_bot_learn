@@ -48,14 +48,19 @@
         <div class="card card-magma h-100 p-4">
           <h2 class="h5 mb-3">Сегодня</h2>
           {% if today_report %}
-            <p class="mb-2">
-              Отмечено:
-              <strong>{{ today_report.goals_done }} из 3</strong>
-            </p>
-            {% if today_report.completed %}
-              <span class="badge text-bg-success">День выполнен</span>
+            {% if today_report.is_chill %}
+              <p class="mb-2">Сегодня Chill — отметка закрыта до завтра.</p>
+              <span class="badge text-bg-info">Chill 🌀</span>
             {% else %}
-              <span class="badge text-bg-warning">Можно дополнить в боте</span>
+              <p class="mb-2">
+                Отмечено:
+                <strong>{{ today_report.goals_done }} из 3</strong>
+              </p>
+              {% if today_report.completed %}
+                <span class="badge text-bg-success">День выполнен</span>
+              {% else %}
+                <span class="badge text-bg-warning">Можно дополнить в боте</span>
+              {% endif %}
             {% endif %}
           {% else %}
             <p class="text-muted-magma mb-0">

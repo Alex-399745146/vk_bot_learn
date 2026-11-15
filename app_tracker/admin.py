@@ -33,8 +33,8 @@ class ParticipantAdmin(admin.ModelAdmin):
 
 @admin.register(Report)
 class ReportAdmin(admin.ModelAdmin):
-    list_display = ("date", "participant", "goals_done", "created_at")
-    list_filter = ("date", "goal_1_done", "goal_2_done", "goal_3_done")
+    list_display = ("date", "participant", "goals_done", "is_chill", "created_at")
+    list_filter = ("date", "is_chill", "goal_1_done", "goal_2_done", "goal_3_done")
     search_fields = ("participant__last_name", "participant__first_name")
     date_hierarchy = "date"
 

@@ -4,6 +4,8 @@ from __future__ import annotations
 
 import json
 
+from .constants import CHILL_LIMIT
+
 
 def button(label: str, cmd: str, *, color: str = "secondary") -> dict:
     return {
@@ -25,15 +27,33 @@ def empty_keyboard() -> str:
     return json.dumps({"buttons": []}, ensure_ascii=False)
 
 
-def main_menu(*, can_checkin: bool = True) -> str:
-    first_row = [button("Мои цели", "menu:goals")]
+def main_menu(*, can_checkin: bool = True, chill_left: int | None = None) -> str:
+    first_row: list[dict] = []
     if can_checkin:
-        first_row.insert(0, button("Отметиться", "menu:checkin", color="positive"))
+        first_row.append(button("Отметиться", "menu:checkin", color="positive"))
+    if chill_left:
+        first_row.append(button(f"Chill {chill_left}/{CHILL_LIMIT}", "chill:start", color="primary"))
 
+    rows: list[list[dict]] = []
+    if first_row:
+        rows.append(first_row)
+    rows.append(
+        [
+            button("Мои цели", "menu:goals"),
+            button("Изменить цели", "menu:edit"),
+        ]
+    )
+    return reply_keyboard(rows)
+
+
+def chill_warning() -> str:
+    """Предупреждение перед использованием Chill."""
     return reply_keyboard(
         [
-            first_row,
-            [button("Изменить цели", "menu:edit")],
+            [
+                button("Передумал", "menu:cancel", color="positive"),
+                button("Продолжить", "chill:ok", color="negative"),
+            ]
         ]
     )
 

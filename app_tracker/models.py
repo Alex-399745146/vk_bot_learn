@@ -68,6 +68,7 @@ class Report(models.Model):
     goal_1_done = models.BooleanField("Цель 1 выполнена", default=False)
     goal_2_done = models.BooleanField("Цель 2 выполнена", default=False)
     goal_3_done = models.BooleanField("Цель 3 выполнена", default=False)
+    is_chill = models.BooleanField("Chill", default=False)
     created_at = models.DateTimeField("Создан", auto_now_add=True)
 
     class Meta:
@@ -81,7 +82,8 @@ class Report(models.Model):
         ]
 
     def __str__(self) -> str:
-        return f"{self.participant} — {self.date}: {self.goals_done}/3"
+        label = "Chill" if self.is_chill else f"{self.goals_done}/3"
+        return f"{self.participant} — {self.date}: {label}"
 
     @property
     def goals_done(self) -> int:

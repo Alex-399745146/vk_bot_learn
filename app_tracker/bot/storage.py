@@ -41,6 +41,17 @@ def today_report(participant: Participant) -> Report | None:
     ).first()
 
 
+def chill_count(participant: Participant, day=None) -> int:
+    """Сколько Chill уже использовано в месяце дня (по умолчанию — сегодня)."""
+    day = day or timezone.localdate()
+    return Report.objects.filter(
+        participant=participant,
+        date__year=day.year,
+        date__month=day.month,
+        is_chill=True,
+    ).count()
+
+
 def payload_command(message: dict) -> str | None:
     """Достаёт cmd из payload кнопки; возвращает None, если payload нет или он битый."""
     raw = message.get("payload")
