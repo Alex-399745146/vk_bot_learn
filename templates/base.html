@@ -372,6 +372,7 @@
       <a class="navbar-brand" href="{% url 'dashboard' %}">🌋 Дневник целей</a>
 
       <div class="d-flex align-items-center gap-2 ms-auto">
+        <a class="btn btn-outline-magma btn-sm" href="{% url 'help' %}">Инструкция</a>
         <a class="btn btn-outline-magma btn-sm" href="/admin/">Админка</a>
         {% if user.is_authenticated %}
           <span class="navbar-text text-muted-magma d-none d-sm-inline">{{ user.username }}</span>

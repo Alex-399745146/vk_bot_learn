@@ -1,0 +1,132 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Инструкция · Дневник целей{% endblock %}
+
+{% block background %}
+  <canvas id="magma-particles" class="magma-canvas" aria-hidden="true"></canvas>
+{% endblock %}
+
+{% block content %}
+  <div class="d-flex flex-wrap justify-content-between align-items-end gap-3 mb-4">
+    <div>
+      <h1 class="h2 magma-title mb-1">Инструкция</h1>
+      <p class="text-muted-magma mb-0">
+        Как устроен «Горячий разгон»: цели, отметки, Chill и баллы
+      </p>
+    </div>
+    {% if user.is_authenticated %}
+      <a class="btn btn-outline-magma btn-sm" href="{% url 'dashboard' %}">В кабинет</a>
+    {% else %}
+      <a class="btn btn-outline-magma btn-sm" href="{% url 'login' %}">Войти</a>
+    {% endif %}
+  </div>
+
+  <div class="row g-4">
+    <div class="col-12 col-lg-6">
+      <div class="card card-magma h-100 p-4">
+        <h2 class="h5 card-title-magma mb-3">🎯 Три цели на месяц</h2>
+        <p class="mb-2">
+          На каждый месяц — три цели. Их нужно выполнять каждый день,
+          а не один раз за месяц.
+        </p>
+        <ul class="mb-0">
+          <li>Поставить цели можно в боте через <strong>/start</strong>.</li>
+          <li>«Изменить цели» — переписать их в любой момент.</li>
+          <li>1-го числа цели обнуляются, бот попросит поставить новые.</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="col-12 col-lg-6">
+      <div class="card card-magma h-100 p-4">
+        <h2 class="h5 card-title-magma mb-3">✅ Ежедневная отметка</h2>
+        <p class="mb-2">Каждый день жми «Отметиться» и отвечай на три вопроса.</p>
+        <ul class="mb-0">
+          <li><strong>3 из 3</strong> — день выполнен, <strong>1 балл</strong> в копилку месяца.</li>
+          <li><strong>1–2 из 3</strong> — баллов нет, но день можно дополнить до конца суток.</li>
+          <li>После 3 из 3 кнопка «Отметиться» скрывается до завтра.</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="col-12 col-lg-6">
+      <div class="card card-magma h-100 p-4">
+        <h2 class="h5 card-title-magma mb-3">❄️ Chill</h2>
+        <p class="mb-2">
+          День отдыха по твоему выбору: <strong>0 баллов</strong>, но день считается закрытым.
+        </p>
+        <ul class="mb-0">
+          <li>До <strong>3 раз в месяц</strong>; остаток видно на кнопке и в «Мои цели».</li>
+          <li>С обычной отметкой не сочетается: один день — один статус.</li>
+          <li>После Chill «Отметиться» вернётся завтра.</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="col-12 col-lg-6">
+      <div class="card card-magma h-100 p-4">
+        <h2 class="h5 card-title-magma mb-3">📊 Баллы и итоги</h2>
+        <p class="mb-2">
+          Баллы считаются за текущий календарный месяц и сгорают 1-го числа.
+        </p>
+        <ul class="mb-0">
+          <li>Полный день — 1 балл.</li>
+          <li>Частичный день и Chill — 0 баллов.</li>
+          <li>Сумма видна в «Мои цели» в боте и в кабинете на сайте.</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="col-12 col-lg-6">
+      <div class="card card-magma h-100 p-4">
+        <h2 class="h5 card-title-magma mb-3">🌐 Веб-кабинет</h2>
+        <p class="mb-2">
+          На сайте видны цели, сегодняшняя отметка, статистика месяца и последние дни.
+        </p>
+        <ol class="mb-0">
+          <li>Напиши боту <strong>/start</strong> и поставь цели.</li>
+          <li>Открой «Мои цели» и скопируй свой <strong>VK ID</strong>.</li>
+          <li>Зарегистрируйся на сайте с этим VK ID и придумай логин с паролем.</li>
+        </ol>
+      </div>
+    </div>
+
+    <div class="col-12 col-lg-6">
+      <div class="card card-magma h-100 p-4">
+        <h2 class="h5 card-title-magma mb-3">🆘 Команды и кнопки</h2>
+        <p class="mb-2">Всё управление — кнопками под чатом, текстом почти ничего не нужно.</p>
+        <ul class="mb-0">
+          <li><strong>/start</strong> — меню или старт настройки целей.</li>
+          <li><strong>/help</strong> — эта инструкция прямо в боте.</li>
+          <li>«Мои цели» — баллы, Chill и VK ID.</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <div class="alert alert-magma mt-4 mb-0" role="note">
+    <strong>Главное правило:</strong> один день — один статус. Выполнен,
+    частичный, Chill — выбрать можно только что-то одно.
+  </div>
+
+  <div class="card card-magma p-4 mt-4">
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-3">
+      <div>
+        <div class="h5 card-title-magma mb-1">Готов начать?</div>
+        <p class="text-muted-magma mb-0">
+          Напиши боту <strong>/start</strong> в сообщения сообщества.
+        </p>
+      </div>
+      {% if user.is_authenticated %}
+        <a class="btn btn-magma" href="{% url 'dashboard' %}">Открыть кабинет</a>
+      {% else %}
+        <a class="btn btn-magma" href="{% url 'register' %}">Зарегистрироваться</a>
+      {% endif %}
+    </div>
+  </div>
+{% endblock %}
+
+{% block extra_scripts %}
+  <script src="{% static 'js/magma.js' %}" defer></script>
+{% endblock %}
