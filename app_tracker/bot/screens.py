@@ -80,7 +80,7 @@ def _menu_card(
     lines.append("")
 
     if report is None:
-        lines.append("⏳ Сегодня ещё не отмечено · время до 01:00")
+        lines.append("⏳ Сегодня ещё не отмечено · до 00:00 по Москве")
     elif report.is_chill:
         lines.append("🌀 Сегодня Chill · отметка закрыта до завтра")
     elif report.completed:

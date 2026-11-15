@@ -52,14 +52,23 @@ def handle_chill(vk, participant: Participant, state: BotState, peer_id: int) ->
         begin_onboarding(vk, participant, state, peer_id)
         return
 
+    # Кнопка могла остаться в старом сообщении: не сбиваем текущий сценарий.
+    if state.state == states.CHILL_CONFIRM:
+        send(vk, peer_id, "Нажми «Передумал» или «Продолжить».", keyboards.chill_warning())
+        return
+
+    if state.state != states.IDLE:
+        expired(vk, participant, peer_id)
+        return
+
     report = today_report(participant)
     if report is not None:
-        send(
-            vk,
-            peer_id,
-            "Сегодня уже есть отметка. Chill не сочетается с ней.",
-            menu_keyboard(participant),
+        reason = (
+            "Сегодня уже Chill — отметка закрыта до завтра."
+            if report.is_chill
+            else "Сегодня уже есть отметка. Сначала заверши её — Chill не сочетается с ней."
         )
+        send(vk, peer_id, reason, menu_keyboard(participant))
         return
 
     used = chill_count(participant)

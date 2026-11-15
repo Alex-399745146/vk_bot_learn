@@ -72,25 +72,31 @@
     </div>
 
     <div class="row g-3 mb-4">
-      <div class="col-6 col-lg-3">
+      <div class="col-6 col-lg">
         <div class="stat-card">
           <div class="stat-value">{{ month_total }}</div>
-          <div class="stat-label">дней отмечено</div>
+          <div class="stat-label">дней с целями</div>
         </div>
       </div>
-      <div class="col-6 col-lg-3">
+      <div class="col-6 col-lg">
         <div class="stat-card">
           <div class="stat-value">{{ month_completed }}</div>
           <div class="stat-label">выполнено полностью</div>
         </div>
       </div>
-      <div class="col-6 col-lg-3">
+      <div class="col-6 col-lg">
         <div class="stat-card">
           <div class="stat-value">{{ month_partial }}</div>
           <div class="stat-label">частично</div>
         </div>
       </div>
-      <div class="col-6 col-lg-3">
+      <div class="col-6 col-lg">
+        <div class="stat-card">
+          <div class="stat-value">{{ month_chill }}</div>
+          <div class="stat-label">Chill за месяц</div>
+        </div>
+      </div>
+      <div class="col-6 col-lg">
         <div class="stat-card">
           <div class="stat-value">{{ streak }}</div>
           <div class="stat-label">дней подряд</div>
@@ -116,16 +122,23 @@
               {% for report in reports %}
                 <tr>
                   <td>{{ report.date|date:"d.m.Y" }}</td>
-                  <td>{% if report.goal_1_done %}✅{% else %}❌{% endif %}</td>
-                  <td>{% if report.goal_2_done %}✅{% else %}❌{% endif %}</td>
-                  <td>{% if report.goal_3_done %}✅{% else %}❌{% endif %}</td>
-                  <td class="text-end">
-                    {% if report.completed %}
-                      <span class="badge text-bg-success">3/3</span>
-                    {% else %}
-                      <span class="badge text-bg-secondary">{{ report.goals_done }}/3</span>
-                    {% endif %}
-                  </td>
+                  {% if report.is_chill %}
+                    <td colspan="3" class="text-muted-magma">день отдыха</td>
+                    <td class="text-end">
+                      <span class="badge badge-magma">🌀 Chill</span>
+                    </td>
+                  {% else %}
+                    <td>{% if report.goal_1_done %}✅{% else %}❌{% endif %}</td>
+                    <td>{% if report.goal_2_done %}✅{% else %}❌{% endif %}</td>
+                    <td>{% if report.goal_3_done %}✅{% else %}❌{% endif %}</td>
+                    <td class="text-end">
+                      {% if report.completed %}
+                        <span class="badge text-bg-success">3/3</span>
+                      {% else %}
+                        <span class="badge text-bg-secondary">{{ report.goals_done }}/3</span>
+                      {% endif %}
+                    </td>
+                  {% endif %}
                 </tr>
               {% endfor %}
             </tbody>

@@ -236,6 +236,7 @@ participant.has_goals   # цели заполнены И поставлены н
 ```python
 date
 goal_1_done, goal_2_done, goal_3_done
+is_chill
 ```
 
 Свойства:
@@ -258,12 +259,14 @@ data = {"index": 1, "results": [true]}
 ### Почему «Отметиться» исчезает
 
 `Report` уникален по паре `(participant, date)`. Значит, на один день — одна
-отметка. Меню собирается функцией `main_menu(can_checkin=...)`:
+отметка. Меню собирается функцией `main_menu(can_checkin=..., chill_left=...)`:
 
 ```python
 report = today_report(participant)
-can_checkin = report is None or not report.completed
-keyboard = keyboards.main_menu(can_checkin=can_checkin)
+used = chill_count(participant)
+can_checkin = report is None or (not report.completed and not report.is_chill)
+can_chill = report is None and used < CHILL_LIMIT
+keyboard = keyboards.main_menu(can_checkin=can_checkin, chill_left=...)
 ```
 
 `completed` — это `report.goals_done == 3`. Поэтому при 2 из 3 кнопка остаётся:
@@ -278,6 +281,25 @@ keyboard = keyboards.main_menu(can_checkin=can_checkin)
 Старая кнопка могла остаться в чате. Если её нажать после выполнения всех
 трёх целей, бот покажет статус с `[Изменить] [Меню]` — новая клавиатура уже
 будет без «Отметиться».
+
+### Chill
+
+Chill — это день отдыха по выбору участника: 0 баллов, но день закрыт.
+
+- `CHILL_LIMIT = 3` в `app_tracker/bot/constants.py`;
+- поле `Report.is_chill`, миграция `0006_report_is_chill`;
+- кнопка `❄️ Chill 3/3` показывает **остаток**: `CHILL_LIMIT - used`;
+- при нажатии — предупреждение `[Передумал] [Продолжить]`;
+- после подтверждения создаётся `Report(is_chill=True)` с тремя `False`;
+- `Отметиться` и `Chill` скрываются до следующих суток;
+- Chill не сочетается с обычной отметкой: если за сегодня уже есть `Report`
+  (в том числе частичный 1/3), Chill не предлагается — один день, один статус;
+- после третьего Chill за месяц кнопка исчезает, а на старую кнопку бот
+  отвечает «Лимит Chill исчерпан»;
+- `month_points()` не считает Chill: `is_chill=False` в фильтре.
+
+Счётчик сбрасывается сам 1-го числа: `chill_count()` фильтрует по году и
+месяцу текущей даты, отдельного cron нет.
 
 ### Кнопки
 
@@ -295,6 +317,7 @@ Reply-кнопка присылает текст и `payload`:
 | `menu:goals` | показать рецепт |
 | `menu:edit` | изменить цели |
 | `menu:cancel` | сброс и меню |
+| `chill:start` / `chill:ok` | показать предупреждение / записать Chill |
 | `onb:ok` / `onb:edit` | подтвердить / изменить цели |
 | `rep:yes` / `rep:no` | ответ по цели |
 | `rep:edit` | переотметить день |
