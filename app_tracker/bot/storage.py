@@ -95,3 +95,18 @@ def set_state(state: BotState, name: str, data: dict | None = None) -> None:
 def reset_state(state: BotState) -> None:
     """Сбрасывает состояние в IDLE и очищает данные шага."""
     set_state(state, states.IDLE, {})
+
+
+def update_participant_profile(participant, vk_data: dict) -> None:
+    """Обновляет данные профиля (фото и пол) на основе ответа от VK."""
+    if not vk_data:
+        return
+
+    participant.photo_id = vk_data.get("photo_id", "")
+    participant.sex = vk_data.get("sex", 0)
+
+    photo_200 = vk_data.get("photo_200")
+    if photo_200:
+        participant.photo_url = photo_200
+
+    participant.save(update_fields=["photo_id", "sex", "photo_url"])
