@@ -125,6 +125,43 @@
 
     main { position: relative; z-index: 1; }
 
+    /* Мотивационная полоса под шапкой */
+    .motivation-strip {
+      position: relative;
+      z-index: 1;
+      padding: .85rem 0;
+      text-align: center;
+      background:
+        linear-gradient(
+          90deg,
+          rgba(255, 90, 31, .14) 0%,
+          rgba(255, 183, 3, .07) 45%,
+          rgba(255, 45, 0, .14) 100%
+        );
+      border-bottom: 1px solid rgba(255, 101, 31, .18);
+    }
+
+    .motivation-title {
+      margin: 0 0 .15rem;
+      font-size: .82rem;
+      font-weight: 800;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+      color: #ffd166;
+      text-shadow: 0 0 14px rgba(255, 120, 30, .35);
+    }
+
+    .motivation-text {
+      margin: 0;
+      font-size: .92rem;
+      color: var(--magma-text);
+    }
+
+    @media (max-width: 575.98px) {
+      .motivation-title { font-size: .72rem; letter-spacing: .08em; }
+      .motivation-text { font-size: .84rem; }
+    }
+
     .magma-title {
       background: linear-gradient(90deg, #fff 0%, #ffd166 55%, #ff5a1f 100%);
       -webkit-background-clip: text;
@@ -408,6 +445,15 @@
       </div>
     </div>
   </nav>
+
+  <div class="motivation-strip">
+    <div class="container">
+      <p class="motivation-title">🔥 Твой главный соперник — вчерашний ты</p>
+      <p class="motivation-text">
+        Три цели. Один закрытый день. Ещё один шаг к форме, которой будешь гордиться.
+      </p>
+    </div>
+  </div>
 
   <main class="container py-4 py-lg-5">
     {% for message in messages %}
