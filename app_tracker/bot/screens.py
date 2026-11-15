@@ -88,6 +88,12 @@ def _menu_card(
     else:
         lines.append(f"🟡 Сегодня отмечено {report.goals_done} из 3 · можно дополнить")
 
+    lines += [
+        "",
+        "──────────────",
+        f"🆔 VK ID: {participant.vk_id} · для регистрации на сайте",
+    ]
+
     return "\n".join(lines)
 
 
