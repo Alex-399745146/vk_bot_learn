@@ -132,25 +132,16 @@
 
     .profile-avatar {
       display: block;
-      width: 104px;
-      height: 104px;
+      width: 132px;
+      height: 132px;
       border-radius: 50%;
       object-fit: cover;
+      object-position: center 55%;
       background: var(--magma-surface-solid);
       transition: transform .25s ease;
     }
 
     .profile-avatar-ring:hover .profile-avatar { transform: scale(1.04); }
-
-    .profile-avatar-fallback {
-      display: grid;
-      place-items: center;
-      font-size: 2.7rem;
-      font-weight: 800;
-      color: #2a0f07;
-      background: linear-gradient(150deg, #ffd166, #ff7a1f);
-      user-select: none;
-    }
 
     .gender-badge {
       display: inline-grid;
@@ -184,7 +175,7 @@
 
     @media (max-width: 575.98px) {
       .profile-card { flex-direction: column; text-align: center; }
-      .profile-avatar { width: 88px; height: 88px; }
+      .profile-avatar { width: 104px; height: 104px; }
     }
 
     .btn-magma {

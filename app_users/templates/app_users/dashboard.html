@@ -19,9 +19,12 @@
             loading="lazy"
           >
         {% else %}
-          <div class="profile-avatar profile-avatar-fallback" aria-hidden="true">
-            {{ participant.first_name|default:"?"|first|upper }}
-          </div>
+          <img
+            class="profile-avatar"
+            src="{% static 'img/avatar-default.jpg' %}"
+            alt="Аватар по умолчанию"
+            loading="lazy"
+          >
         {% endif %}
       </div>
 
