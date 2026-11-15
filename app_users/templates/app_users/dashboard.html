@@ -17,6 +17,7 @@
             src="{{ participant.photo_url }}"
             alt="Фото {{ participant.first_name }}"
             loading="lazy"
+            onerror="this.onerror=null;this.src='{% static 'img/avatar-default.jpg' %}'"
           >
         {% else %}
           <img
