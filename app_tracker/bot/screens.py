@@ -6,6 +6,7 @@ from . import keyboards
 from .constants import CHILL_LIMIT
 from .helpers import send
 from app_tracker.models import BotState, Participant
+from .permissions import is_superuser
 from .storage import chill_count, month_points, reset_state, today_report
 from .texts import HELP_TEXT, goals_bulletin
 
@@ -47,7 +48,11 @@ def show_menu(
         vk,
         peer_id,
         text,
-        keyboards.main_menu(can_checkin=can_checkin, chill_left=chill_left),
+        keyboards.main_menu(
+            can_checkin=can_checkin,
+            chill_left=chill_left,
+            is_superuser=is_superuser(participant),
+        ),
     )
 
 
@@ -101,7 +106,11 @@ def menu_keyboard(participant: Participant) -> str:
     """Меню, учитывающее отметку за сегодня и остаток Chill."""
     report = today_report(participant)
     can_checkin, chill_left, _ = _menu_flags(participant, report)
-    return keyboards.main_menu(can_checkin=can_checkin, chill_left=chill_left)
+    return keyboards.main_menu(
+        can_checkin=can_checkin,
+        chill_left=chill_left,
+        is_superuser=is_superuser(participant),
+    )
 
 
 def show_help(vk, participant: Participant, state: BotState, peer_id: int) -> None:

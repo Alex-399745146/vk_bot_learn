@@ -13,13 +13,15 @@ class ParticipantAdmin(admin.ModelAdmin):
         "last_name",
         "first_name",
         "vk_id",
+        "is_moderator",
     )
     search_fields = (
         "last_name",
         "first_name",
         "=vk_id",
     )
-    list_filter = ("created_at", "goals_month")
+    list_filter = ("created_at", "goals_month", "is_moderator")
+    list_editable = ("is_moderator",)
     readonly_fields = ("created_at",)
 
 
