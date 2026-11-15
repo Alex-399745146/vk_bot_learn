@@ -20,6 +20,9 @@ class Participant(models.Model):
     goals_month = models.CharField(
         "Месяц целей", max_length=7, blank=True, default="", help_text="Например: 2026-11"
     )
+    is_moderator = models.BooleanField(
+        "Модератор", default=False, help_text="Права выдаёт суперпользователь в боте"
+    )
     created_at = models.DateTimeField("Добавлен", auto_now_add=True)
 
     class Meta:
@@ -59,7 +62,11 @@ class BotState(models.Model):
 
 
 class Report(models.Model):
-    """Отметка за день: какие из трёх целей выполнены."""
+    """
+    Отметка за день: какие из трёх целей выполнены,
+    статус дня (Выполнен, Частичный, Chill, Пропуск).
+    """
+
 
     participant = models.ForeignKey(
         Participant, on_delete=models.CASCADE, related_name="reports", verbose_name="Участник"
@@ -68,6 +75,7 @@ class Report(models.Model):
     goal_1_done = models.BooleanField("Цель 1 выполнена", default=False)
     goal_2_done = models.BooleanField("Цель 2 выполнена", default=False)
     goal_3_done = models.BooleanField("Цель 3 выполнена", default=False)
+    is_chill = models.BooleanField("Chill", default=False)
     created_at = models.DateTimeField("Создан", auto_now_add=True)
 
     class Meta:
@@ -81,7 +89,8 @@ class Report(models.Model):
         ]
 
     def __str__(self) -> str:
-        return f"{self.participant} — {self.date}: {self.goals_done}/3"
+        label = "Chill" if self.is_chill else f"{self.goals_done}/3"
+        return f"{self.participant} — {self.date}: {label}"
 
     @property
     def goals_done(self) -> int:

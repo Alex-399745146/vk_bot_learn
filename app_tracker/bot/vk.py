@@ -12,6 +12,7 @@ from __future__ import annotations
 import json
 import logging
 import secrets
+import time
 from typing import Any, Iterator
 
 import requests
@@ -26,6 +27,14 @@ API_VERSION = "5.199"
 
 # Сколько секунд ВК держит LongPoll-соединение, если событий нет.
 LONG_POLL_WAIT = 25
+
+# Пауза перед переподключением, если сеть или ВК недоступны.
+RETRY_DELAY = 5
+
+# Сколько подряд сетевых ошибок терпим, прежде чем взять новую сессию LongPoll.
+# Новую сессию берём только в крайнем случае: у неё свежий ts, и события,
+# пришедшие во время обрыва, могут потеряться.
+SESSION_RETRIES = 3
 
 
 class VK:
@@ -54,11 +63,14 @@ class VK:
 
         return payload.get("response")
 
-    def send_message(self, peer_id: int, text: str, *, keyboard: str | None = None) -> None:
-        """Отправляет сообщение в диалог.
+    def send_message(self, peer_id: int, text: str, *, keyboard: str | None = None) -> int | None:
+        """Отправляет сообщение в диалог и возвращает его message_id.
 
         peer_id — идентификатор диалога. Для личных сообщений сообщества
         он совпадает с id пользователя.
+
+        message_id нужен, чтобы потом менять текст или клавиатуру через
+        messages.edit — например, в списке модераторов.
         """
         params: dict[str, Any] = {
             "peer_id": peer_id,
@@ -68,7 +80,38 @@ class VK:
         }
         if keyboard:
             params["keyboard"] = keyboard
-        self.call("messages.send", **params)
+        return self.call("messages.send", **params)
+
+    def edit_message(
+        self, peer_id: int, message_id: int, text: str, *, keyboard: str | None = None
+    ) -> None:
+        """Меняет текст и клавиатуру уже отправленного сообщения сообщества."""
+        params: dict[str, Any] = {
+            "peer_id": peer_id,
+            "message_id": message_id,
+            "message": text,
+        }
+        if keyboard is not None:
+            params["keyboard"] = keyboard
+        self.call("messages.edit", **params)
+
+    def answer_event(
+        self, event_id: str, user_id: int, peer_id: int, *, text: str | None = None
+    ) -> None:
+        """Подтверждает нажатие inline-кнопки, чтобы у клиента не крутился спиннер.
+
+        Если передан text — ВК покажет короткое всплывающее сообщение (snackbar).
+        """
+        params: dict[str, Any] = {
+            "event_id": event_id,
+            "user_id": user_id,
+            "peer_id": peer_id,
+        }
+        if text:
+            params["event_data"] = json.dumps(
+                {"type": "show_snackbar", "text": text}, ensure_ascii=False
+            )
+        self.call("messages.sendMessageEventAnswer", **params)
 
     def long_poll(self) -> Iterator[dict]:
         """Бесконечный поток событий сообщества.
@@ -78,18 +121,45 @@ class VK:
         2. GET a_check ждёт до 25 секунд и возвращает новые события.
         3. ts из ответа передаём в следующий запрос — так ВК понимает,
            что мы уже прочитали.
+
+        Сетевые ошибки не пробрасываются наружу: бот переподключается сам,
+        иначе один таймаут `lp.vk.com` останавливал бы его до ручного запуска.
         """
         server, key, ts = self._long_poll_session()
         log.debug("LongPoll сессия: server=%s ts=%s key=%s…", server, ts, key[:6])
+        failures = 0
 
         while True:
-            response = self.session.get(
-                server,
-                params={"act": "a_check", "key": key, "ts": ts, "wait": LONG_POLL_WAIT},
-                timeout=LONG_POLL_WAIT + 15,
-            )
-            response.raise_for_status()
-            data = response.json()
+            try:
+                response = self.session.get(
+                    server,
+                    params={"act": "a_check", "key": key, "ts": ts, "wait": LONG_POLL_WAIT},
+                    timeout=LONG_POLL_WAIT + 15,
+                )
+                response.raise_for_status()
+                data = response.json()
+            except (requests.RequestException, ValueError) as exc:
+                # Обрыв связи или мусор вместо JSON: ждём и повторяем с тем же ts.
+                failures += 1
+                log.warning(
+                    "LongPoll: %s (%s/%s), повтор через %s с",
+                    exc.__class__.__name__,
+                    failures,
+                    SESSION_RETRIES,
+                    RETRY_DELAY,
+                )
+                time.sleep(RETRY_DELAY)
+                if failures >= SESSION_RETRIES:
+                    failures = 0
+                    try:
+                        server, key, ts = self._long_poll_session()
+                        log.debug("Новая сессия: server=%s ts=%s", server, ts)
+                    except (requests.RequestException, ValueError):
+                        # ВК тоже недоступен — остаёмся на старой сессии и пробуем ещё.
+                        log.warning("LongPoll: не удалось получить новую сессию", exc_info=True)
+                continue
+
+            failures = 0
 
             failed = data.get("failed")
             if failed == 1:

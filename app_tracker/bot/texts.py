@@ -13,6 +13,7 @@ HELP_TEXT = (
     "• Цели ставятся на месяц — три цели.\n"
     "• Каждый день жми «Отметиться» и отвечай «Да» или «Нет» по каждой цели.\n"
     "• Если выполнены все три — кнопка исчезает до следующих суток.\n"
+    "• «Chill» — до 3 раз в месяц: день отдыха, 0 баллов, закрывает отметку.\n"
     "• «Мои цели» — посмотреть цели, «Изменить цели» — поменять.\n\n"
     "Команды:\n"
     "/start — меню\n"
@@ -43,6 +44,22 @@ def goals_text(goals: list[str], month_key: str = "") -> str:
         lines = ["Твои цели:"]
     for number, goal in enumerate(goals, start=1):
         lines.append(f"{number}. {goal}")
+    return "\n".join(lines)
+
+
+GOAL_EMOJI = ("1️⃣", "2️⃣", "3️⃣")
+
+
+def goals_bulletin(goals: list[str], month_key: str = "") -> str:
+    """Блок целей для карточки: эмодзи-номера и месяц."""
+    title = (
+        f"🎯 Цели на {month_label(month_key)}:"
+        if month_key
+        else "🎯 Твои цели:"
+    )
+    lines = [title]
+    for emoji, goal in zip(GOAL_EMOJI, goals):
+        lines.append(f"{emoji} {goal}")
     return "\n".join(lines)
 
 

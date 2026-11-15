@@ -5,11 +5,11 @@ from __future__ import annotations
 from django.utils import timezone
 
 from . import keyboards, states
-from .constants import GOAL_COUNT
+from .constants import CHILL_LIMIT, GOAL_COUNT
 from .helpers import send
 from app_tracker.models import BotState, Participant, Report
-from .screens import expired
-from .storage import reset_state, set_state, today_report
+from .screens import expired, menu_keyboard
+from .storage import chill_count, reset_state, set_state, today_report
 from .texts import report_text, report_title
 
 
@@ -23,6 +23,15 @@ def handle_checkin(vk, participant: Participant, state: BotState, peer_id: int) 
         return
 
     report = today_report(participant)
+    if report is not None and report.is_chill:
+        send(
+            vk,
+            peer_id,
+            "Сегодня Chill — отметка закрыта до завтра.",
+            menu_keyboard(participant),
+        )
+        return
+
     if report is not None and report.completed:
         send(
             vk,
@@ -35,8 +44,117 @@ def handle_checkin(vk, participant: Participant, state: BotState, peer_id: int) 
     start_report(vk, participant, state, peer_id)
 
 
+def handle_chill(vk, participant: Participant, state: BotState, peer_id: int) -> None:
+    """Проверяет лимит Chill и показывает предупреждение."""
+    if not participant.has_goals:
+        from .onboarding import begin_onboarding
+
+        begin_onboarding(vk, participant, state, peer_id)
+        return
+
+    # Кнопка могла остаться в старом сообщении: не сбиваем текущий сценарий.
+    if state.state == states.CHILL_CONFIRM:
+        send(vk, peer_id, "Нажми «Передумал» или «Продолжить».", keyboards.chill_warning())
+        return
+
+    if state.state != states.IDLE:
+        expired(vk, participant, peer_id)
+        return
+
+    report = today_report(participant)
+    if report is not None:
+        reason = (
+            "Сегодня уже Chill — отметка закрыта до завтра."
+            if report.is_chill
+            else "Сегодня уже есть отметка. Сначала заверши её — Chill не сочетается с ней."
+        )
+        send(vk, peer_id, reason, menu_keyboard(participant))
+        return
+
+    used = chill_count(participant)
+    if used >= CHILL_LIMIT:
+        send(
+            vk,
+            peer_id,
+            f"Лимит Chill исчерпан: {CHILL_LIMIT} из {CHILL_LIMIT} в этом месяце.",
+            menu_keyboard(participant),
+        )
+        return
+
+    set_state(state, states.CHILL_CONFIRM, {"used": used})
+    send(
+        vk,
+        peer_id,
+        f"Chill можно использовать {CHILL_LIMIT} раза в месяц. "
+        f"Сейчас будет {used + 1}-й из {CHILL_LIMIT}.\n\nПродолжить?",
+        keyboards.chill_warning(),
+    )
+
+
+def confirm_chill(vk, participant: Participant, state: BotState, peer_id: int) -> None:
+    """Записывает Chill за сегодня после подтверждения."""
+    if state.state != states.CHILL_CONFIRM:
+        expired(vk, participant, peer_id)
+        return
+
+    report = today_report(participant)
+    if report is not None:
+        reset_state(state)
+        send(
+            vk,
+            peer_id,
+            "Сегодня уже есть отметка. Chill не сочетается с ней.",
+            menu_keyboard(participant),
+        )
+        return
+
+    used = chill_count(participant)
+    if used >= CHILL_LIMIT:
+        reset_state(state)
+        send(
+            vk,
+            peer_id,
+            f"Лимит Chill исчерпан: {CHILL_LIMIT} из {CHILL_LIMIT} в этом месяце.",
+            menu_keyboard(participant),
+        )
+        return
+
+    today = timezone.localdate()
+    Report.objects.update_or_create(
+        participant=participant,
+        date=today,
+        defaults={
+            "is_chill": True,
+            "goal_1_done": False,
+            "goal_2_done": False,
+            "goal_3_done": False,
+        },
+    )
+    reset_state(state)
+    send(
+        vk,
+        peer_id,
+        (
+            f"Записал: {today:%d.%m.%Y} — Chill 🌀, 0 баллов.\n"
+            f"Chill за месяц: {used + 1} из {CHILL_LIMIT}.\n"
+            "Отметиться снова можно завтра."
+        ),
+        menu_keyboard(participant),
+    )
+
+
 def start_report(vk, participant: Participant, state: BotState, peer_id: int) -> None:
     """Начинает отметку дня: обнуляет индекс и результаты, задаёт первый вопрос."""
+    report = today_report(participant)
+    if report is not None and report.is_chill:
+        send(
+            vk,
+            peer_id,
+            "Сегодня Chill — отметка закрыта до завтра.",
+            menu_keyboard(participant),
+        )
+        return
+
     set_state(state, states.REPORTING, {"index": 0, "results": []})
     ask_goal(vk, participant, state, peer_id, 0)
 
@@ -95,5 +213,5 @@ def answer_report(
         vk,
         peer_id,
         report_text(participant, report, title=report_title(report, exists=False)),
-        keyboards.main_menu(can_checkin=not report.completed),
+        menu_keyboard(participant),
     )

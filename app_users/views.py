@@ -62,8 +62,10 @@ def dashboard(request):
     month_reports = participant.reports.filter(
         date__year=today.year, date__month=today.month
     )
-    total = month_reports.count()
-    completed = month_reports.filter(
+    chill_total = month_reports.filter(is_chill=True).count()
+    goal_reports = month_reports.filter(is_chill=False)
+    total = goal_reports.count()
+    completed = goal_reports.filter(
         goal_1_done=True, goal_2_done=True, goal_3_done=True
     ).count()
 
@@ -76,6 +78,7 @@ def dashboard(request):
             "month_total": total,
             "month_completed": completed,
             "month_partial": total - completed,
+            "month_chill": chill_total,
             "streak": _streak(participant),
         }
     )

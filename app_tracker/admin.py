@@ -12,30 +12,25 @@ class ParticipantAdmin(admin.ModelAdmin):
     list_display = (
         "last_name",
         "first_name",
-        "goals_month",
-        "goal_1",
-        "goal_2",
-        "goal_3",
         "vk_id",
+        "is_moderator",
     )
     search_fields = (
         "last_name",
         "first_name",
-        "goal_1",
-        "goal_2",
-        "goal_3",
-        "goals_month",
-        "vk_id",
+        "=vk_id",
     )
-    list_filter = ("created_at", "goals_month")
+    list_filter = ("created_at", "goals_month", "is_moderator")
+    list_editable = ("is_moderator",)
     readonly_fields = ("created_at",)
 
 
 @admin.register(Report)
 class ReportAdmin(admin.ModelAdmin):
-    list_display = ("date", "participant", "goals_done", "created_at")
-    list_filter = ("date", "goal_1_done", "goal_2_done", "goal_3_done")
+    list_display = ("date", "participant", "goals_done", "is_chill", "created_at")
+    list_filter = ("date", "is_chill", "goal_1_done", "goal_2_done", "goal_3_done")
     search_fields = ("participant__last_name", "participant__first_name")
+    list_select_related = ("participant",)
     date_hierarchy = "date"
 
 

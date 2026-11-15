@@ -107,6 +107,13 @@ VK_TOKEN = os.getenv("VK_TOKEN", "").strip()
 VK_GROUP_ID = os.getenv("VK_GROUP_ID", "").strip()
 LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO")
 
+# VK ID владельца бота: только он видит кнопку «Модераторы».
+# В боте нет авторизации, поэтому «суперпользователь» задаётся явно.
+try:
+    SUPERUSER_VK_ID = int(os.getenv("SUPERUSER_VK_ID", "") or 0)
+except ValueError:
+    SUPERUSER_VK_ID = 0
+
 LOGGING = {
     "version": 1,
     "disable_existing_loggers": False,
