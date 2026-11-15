@@ -14,6 +14,15 @@ class Participant(models.Model):
     vk_id = models.BigIntegerField("VK ID", unique=True)
     last_name = models.CharField("Фамилия", max_length=80, blank=True, default="")
     first_name = models.CharField("Имя", max_length=60, blank=True, default="")
+
+    photo_id = models.CharField("ID фото ВК", max_length=100, blank=True, default="")
+    photo_url = models.URLField("URL фото 200px", max_length=500, blank=True, default="")
+    sex = models.SmallIntegerField(
+        "Пол",
+        choices=[(0, "—"), (1, "Ж"), (2, "М")],
+        default=0
+    )
+
     goal_1 = models.CharField("Цель 1", max_length=200, blank=True, default="")
     goal_2 = models.CharField("Цель 2", max_length=200, blank=True, default="")
     goal_3 = models.CharField("Цель 3", max_length=200, blank=True, default="")

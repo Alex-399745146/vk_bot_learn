@@ -31,19 +31,28 @@ def current_month() -> str:
     return timezone.localdate().strftime("%Y-%m")
 
 
-def fetch_user(vk, user_id: int) -> dict[str, str]:
-    """Просит у ВК фамилию и имя: {'last_name': ..., 'first_name': ...}."""
+def fetch_user(vk, user_id: int) -> dict:
+    """Просит у ВК имя, фамилию, фото и пол.
+
+    Возвращает словарь с ключами `last_name`, `first_name`, `photo_id`,
+    `photo_url`, `sex`. Если ВК не ответил — пустые значения, а имя
+    «пользователь», чтобы сценарий не падал.
+    """
     try:
-        users = vk.call("users.get", user_ids=user_id)
+        profile = vk.get_user_info(user_id) or {}
     except Exception:
         log.warning("users.get не сработал", exc_info=True)
-        return {"last_name": "", "first_name": "пользователь"}
+        profile = {}
 
-    if users:
-        user = users[0]
-        return {
-            "last_name": str(user.get("last_name") or ""),
-            "first_name": str(user.get("first_name") or "пользователь"),
-        }
+    try:
+        sex = int(profile.get("sex") or 0)
+    except (TypeError, ValueError):
+        sex = 0
 
-    return {"last_name": "", "first_name": "пользователь"}
+    return {
+        "last_name": str(profile.get("last_name") or ""),
+        "first_name": str(profile.get("first_name") or "пользователь"),
+        "photo_id": str(profile.get("photo_id") or ""),
+        "photo_url": str(profile.get("photo_200") or ""),
+        "sex": sex,
+    }

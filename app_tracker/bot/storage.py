@@ -18,9 +18,10 @@ log = logging.getLogger(__name__)
 
 
 def get_participant(vk, vk_id: int) -> tuple[Participant, bool]:
-    """Находит участника по vk_id или создаёт его; заполняет пустые имя и фамилию."""
+    """Находит участника по vk_id или создаёт его; обновляет имя, фото и пол."""
     user = fetch_user(vk, vk_id)
-    participant, created = Participant.objects.get_or_create(vk_id=vk_id, defaults=user)
+    defaults = {"last_name": user["last_name"], "first_name": user["first_name"]}
+    participant, created = Participant.objects.get_or_create(vk_id=vk_id, defaults=defaults)
 
     if not created:
         changed: list[str] = []
@@ -31,6 +32,7 @@ def get_participant(vk, vk_id: int) -> tuple[Participant, bool]:
         if changed:
             participant.save(update_fields=changed)
 
+    update_participant_profile(participant, user)
     return participant, created
 
 
@@ -95,3 +97,33 @@ def set_state(state: BotState, name: str, data: dict | None = None) -> None:
 def reset_state(state: BotState) -> None:
     """Сбрасывает состояние в IDLE и очищает данные шага."""
     set_state(state, states.IDLE, {})
+
+
+def update_participant_profile(participant, vk_data: dict) -> None:
+    """Обновляет фото и пол из ответа ВК; пишет в базу только изменения."""
+    if not vk_data:
+        return
+
+    changed: list[str] = []
+
+    photo_id = str(vk_data.get("photo_id") or "")
+    if participant.photo_id != photo_id:
+        participant.photo_id = photo_id
+        changed.append("photo_id")
+
+    try:
+        sex = int(vk_data.get("sex") or 0)
+    except (TypeError, ValueError):
+        sex = 0
+    if participant.sex != sex:
+        participant.sex = sex
+        changed.append("sex")
+
+    # photo_200 приходит из ВК, photo_url — из нормализованного fetch_user.
+    photo_url = str(vk_data.get("photo_url") or vk_data.get("photo_200") or "")
+    if photo_url and participant.photo_url != photo_url:
+        participant.photo_url = photo_url
+        changed.append("photo_url")
+
+    if changed:
+        participant.save(update_fields=changed)
