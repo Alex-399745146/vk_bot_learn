@@ -48,6 +48,11 @@ def register(request):
     return render(request, "app_users/register.html", {"form": form})
 
 
+def help_page(request):
+    """Публичная инструкция: как работает бот и веб-кабинет."""
+    return render(request, "app_users/help.html")
+
+
 @login_required
 def dashboard(request):
     """Показывает цели, сегодняшнюю отметку и последние результаты."""

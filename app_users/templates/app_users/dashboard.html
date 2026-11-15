@@ -1,19 +1,68 @@
 {% extends "base.html" %}
 {% load static %}
 
-{% block title %}Мои результаты · Дневник целей{% endblock %}
+{% block title %}{% if participant %}{{ participant.last_name }} {{ participant.first_name }} · {% endif %}Дневник целей{% endblock %}
 
 {% block background %}
   <canvas id="magma-particles" class="magma-canvas" aria-hidden="true"></canvas>
 {% endblock %}
 
 {% block content %}
-  <div class="d-flex flex-wrap justify-content-between align-items-end gap-3 mb-4">
-    <div>
-      <h1 class="h2 magma-title mb-1">Мои результаты</h1>
-      <p class="text-muted-magma mb-0">Цели, отметки и серия дней</p>
+  {% if participant %}
+    <div class="card card-magma profile-card p-4 p-lg-5 mb-4">
+      <div class="profile-avatar-ring">
+        {% if participant.photo_url %}
+          <img
+            class="profile-avatar"
+            src="{{ participant.photo_url }}"
+            alt="Фото {{ participant.first_name }}"
+            loading="lazy"
+            onerror="this.onerror=null;this.src='{% static 'img/avatar-default.jpg' %}'"
+          >
+        {% else %}
+          <img
+            class="profile-avatar"
+            src="{% static 'img/avatar-default.jpg' %}"
+            alt="Аватар по умолчанию"
+            loading="lazy"
+          >
+        {% endif %}
+      </div>
+
+      <div class="profile-body">
+        <div class="text-uppercase small text-muted-magma mb-1">Мои результаты</div>
+
+        <div class="d-flex flex-wrap align-items-center justify-content-center justify-content-sm-start gap-2 mb-1">
+          <h1 class="h2 magma-title profile-name mb-0">
+            {{ participant.last_name }} {{ participant.first_name }}
+          </h1>
+          {% if participant.sex == 1 %}
+            <span class="gender-badge gender-female" title="Женский" aria-label="Женский">♀</span>
+          {% elif participant.sex == 2 %}
+            <span class="gender-badge gender-male" title="Мужской" aria-label="Мужской">♂</span>
+          {% else %}
+            <span class="gender-badge gender-unknown" title="Пол не указан" aria-label="Пол не указан">–</span>
+          {% endif %}
+        </div>
+
+        <p class="text-muted-magma mb-2">
+          Цели на {{ goals_month_label }} · в проекте с {{ participant.created_at|date:"d.m.Y" }}
+        </p>
+
+        <div class="d-flex flex-wrap gap-2 justify-content-center justify-content-sm-start">
+          <span class="badge badge-magma">VK ID {{ participant.vk_id }}</span>
+          <span class="badge badge-magma">🔥 серия {{ streak }}</span>
+        </div>
+      </div>
     </div>
-  </div>
+  {% else %}
+    <div class="d-flex flex-wrap justify-content-between align-items-end gap-3 mb-4">
+      <div>
+        <h1 class="h2 magma-title mb-1">Мои результаты</h1>
+        <p class="text-muted-magma mb-0">Цели, отметки и серия дней</p>
+      </div>
+    </div>
+  {% endif %}
 
   {% if not participant %}
     <div class="alert alert-magma">

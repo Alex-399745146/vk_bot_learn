@@ -1,3 +1,4 @@
+{% load static %}
 <!doctype html>
 <html lang="ru">
 <head>
@@ -71,7 +72,95 @@
     .magma-navbar .navbar-text { color: var(--magma-muted); }
     .magma-navbar .nav-link:hover { color: #fff; }
 
+    /* Эмблема и девиз движения в шапке */
+    .brand-motto-title {
+      font-weight: 900;
+      font-size: .95rem;
+      line-height: 1.1;
+      letter-spacing: .14em;
+      text-transform: uppercase;
+      background: linear-gradient(90deg, #fff3cf 0%, #ffd166 28%, #ff8a1f 62%, #ff3d00 100%);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+      text-shadow: none;
+      filter: drop-shadow(0 0 10px rgba(255, 90, 31, .45));
+      white-space: nowrap;
+    }
+
+    .brand-motto-sub {
+      font-size: .66rem;
+      line-height: 1.1;
+      letter-spacing: .2em;
+      text-transform: uppercase;
+      color: #ffbf95;
+      text-shadow: none;
+      white-space: nowrap;
+    }
+
+    .brand-emblem {
+      width: 52px;
+      height: 52px;
+      object-fit: contain;
+      /* Эмблема в JPEG на чёрном фоне: screen убирает чёрный квадрат. */
+      mix-blend-mode: screen;
+      filter: drop-shadow(0 0 14px rgba(255, 90, 31, .55));
+      transition: transform .25s ease, filter .25s ease;
+    }
+
+    .brand-emblem-link:hover .brand-emblem {
+      transform: scale(1.06);
+      filter: drop-shadow(0 0 20px rgba(255, 120, 30, .85));
+    }
+
+    @media (max-width: 991.98px) {
+      .brand-emblem { width: 42px; height: 42px; }
+    }
+
+    @media (max-width: 575.98px) {
+      .brand-motto-title { font-size: .78rem; letter-spacing: .1em; }
+      .brand-motto-sub { font-size: .56rem; letter-spacing: .12em; }
+      .brand-emblem { width: 36px; height: 36px; }
+    }
+
     main { position: relative; z-index: 1; }
+
+    /* Мотивационная полоса под шапкой */
+    .motivation-strip {
+      position: relative;
+      z-index: 1;
+      padding: .85rem 0;
+      text-align: center;
+      background:
+        linear-gradient(
+          90deg,
+          rgba(255, 90, 31, .14) 0%,
+          rgba(255, 183, 3, .07) 45%,
+          rgba(255, 45, 0, .14) 100%
+        );
+      border-bottom: 1px solid rgba(255, 101, 31, .18);
+    }
+
+    .motivation-title {
+      margin: 0 0 .15rem;
+      font-size: .82rem;
+      font-weight: 800;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+      color: #ffd166;
+      text-shadow: 0 0 14px rgba(255, 120, 30, .35);
+    }
+
+    .motivation-text {
+      margin: 0;
+      font-size: .92rem;
+      color: var(--magma-text);
+    }
+
+    @media (max-width: 575.98px) {
+      .motivation-title { font-size: .72rem; letter-spacing: .08em; }
+      .motivation-text { font-size: .84rem; }
+    }
 
     .magma-title {
       background: linear-gradient(90deg, #fff 0%, #ffd166 55%, #ff5a1f 100%);
@@ -109,6 +198,73 @@
       font-weight: 800;
       font-size: 1.08em;
       text-shadow: 0 0 14px rgba(255, 183, 3, .35);
+    }
+
+    /* Анкета участника: круглое фото в градиентной рамке */
+    .profile-card {
+      display: flex;
+      align-items: center;
+      gap: 1.5rem;
+    }
+
+    .profile-body { min-width: 0; }
+
+    .profile-avatar-ring {
+      flex: 0 0 auto;
+      padding: 4px;
+      border-radius: 50%;
+      background: linear-gradient(140deg, #ff5a1f 0%, #ffb703 48%, #ff2d55 100%);
+      box-shadow:
+        0 0 0 1px rgba(255, 255, 255, .08),
+        0 0 34px rgba(255, 90, 31, .40);
+    }
+
+    .profile-avatar {
+      display: block;
+      width: 132px;
+      height: 132px;
+      border-radius: 50%;
+      object-fit: cover;
+      object-position: center 55%;
+      background: var(--magma-surface-solid);
+      transition: transform .25s ease;
+    }
+
+    .profile-avatar-ring:hover .profile-avatar { transform: scale(1.04); }
+
+    .gender-badge {
+      display: inline-grid;
+      place-items: center;
+      width: 2rem;
+      height: 2rem;
+      border-radius: 50%;
+      font-size: 1.1rem;
+      font-weight: 700;
+      line-height: 1;
+      border: 1px solid rgba(255, 255, 255, .18);
+      box-shadow: 0 4px 14px rgba(0, 0, 0, .35);
+    }
+
+    .gender-female {
+      color: #ffe1ef;
+      background: linear-gradient(150deg, rgba(255, 64, 129, .55), rgba(255, 122, 182, .20));
+      border-color: rgba(255, 122, 182, .50);
+    }
+
+    .gender-male {
+      color: #e0f0ff;
+      background: linear-gradient(150deg, rgba(59, 130, 246, .55), rgba(96, 165, 250, .20));
+      border-color: rgba(96, 165, 250, .50);
+    }
+
+    .gender-unknown {
+      color: var(--magma-muted);
+      background: rgba(255, 255, 255, .06);
+    }
+
+    @media (max-width: 575.98px) {
+      .profile-card { flex-direction: column; text-align: center; }
+      .profile-avatar { width: 104px; height: 104px; }
     }
 
     .btn-magma {
@@ -258,22 +414,46 @@
 
   <nav class="navbar navbar-expand-lg magma-navbar sticky-top">
     <div class="container">
-      <a class="navbar-brand" href="{% url 'dashboard' %}">🌋 Дневник целей</a>
+      <a
+        class="navbar-brand brand-emblem-link d-flex align-items-center gap-2 m-0"
+        href="{% url 'dashboard' %}"
+        aria-label="Горячий разгон — на главную"
+      >
+        <img
+          class="brand-emblem"
+          src="{% static 'img/emblem.jpg' %}"
+          alt="Эмблема «Горячий разгон»"
+        >
+        <span class="d-flex flex-column text-start">
+          <span class="brand-motto-title">ГОРЯЧИЙ РАЗГОН</span>
+          <span class="brand-motto-sub">Челлендж и комьюнити</span>
+        </span>
+      </a>
 
       <div class="d-flex align-items-center gap-2 ms-auto">
+        <a class="btn btn-outline-magma btn-sm" href="{% url 'help' %}">Инструкция</a>
         <a class="btn btn-outline-magma btn-sm" href="/admin/">Админка</a>
         {% if user.is_authenticated %}
-          <span class="navbar-text text-muted-magma d-none d-sm-inline">{{ user.username }}</span>
           <form method="post" action="{% url 'logout' %}" class="m-0">
             {% csrf_token %}
             <button type="submit" class="btn btn-outline-magma btn-sm">Выйти</button>
           </form>
+          <span class="navbar-text text-muted-magma d-none d-sm-inline">{{ user.username }}</span>
         {% else %}
           <a class="btn btn-outline-magma btn-sm" href="{% url 'login' %}">Войти</a>
         {% endif %}
       </div>
     </div>
   </nav>
+
+  <div class="motivation-strip">
+    <div class="container">
+      <p class="motivation-title">🔥 Твой главный соперник — вчерашний ты</p>
+      <p class="motivation-text">
+        Три цели. Один закрытый день. Ещё один шаг к форме, которой будешь гордиться.
+      </p>
+    </div>
+  </div>
 
   <main class="container py-4 py-lg-5">
     {% for message in messages %}
