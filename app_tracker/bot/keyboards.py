@@ -32,7 +32,7 @@ def main_menu(*, can_checkin: bool = True, chill_left: int | None = None) -> str
     if can_checkin:
         first_row.append(button("Отметиться", "menu:checkin", color="positive"))
     if chill_left:
-        first_row.append(button(f"Chill {chill_left}/{CHILL_LIMIT}", "chill:start", color="primary"))
+        first_row.append(button(f"❄️ Chill {chill_left}/{CHILL_LIMIT}", "chill:start", color="primary"))
 
     rows: list[list[dict]] = []
     if first_row:

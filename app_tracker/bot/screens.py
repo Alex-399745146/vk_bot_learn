@@ -6,8 +6,8 @@ from . import keyboards
 from .constants import CHILL_LIMIT, GOAL_COUNT
 from .helpers import send
 from app_tracker.models import BotState, Participant
-from .storage import chill_count, reset_state, today_report
-from .texts import HELP_TEXT, goals_text
+from .storage import chill_count, month_points, reset_state, today_report
+from .texts import HELP_TEXT, goals_text, month_label
 
 
 def _menu_flags(
@@ -40,10 +40,12 @@ def show_menu(
     reset_state(state)
     report = today_report(participant)
     can_checkin, chill_left, chill_used = _menu_flags(participant, report)
+    points = month_points(participant)
     name = participant.first_name or "друг"
     text = (
         f"Привет, {name}!\n\n"
-        f"{goals_text(participant.goals, participant.goals_month)}"
+        f"{goals_text(participant.goals, participant.goals_month)}\n\n"
+        f"Баллы за {month_label(participant.goals_month)}: {points}."
     )
     if report is not None:
         if report.is_chill:
