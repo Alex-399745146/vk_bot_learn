@@ -1,7 +1,26 @@
+# --- Окружение ---
 .env
 .venv/
+venv/
+
+# --- Python ---
 __pycache__/
 *.pyc
-bot.log
+*.pyo
+*.pyd
+.pytest_cache/
+
+# --- Django ---
 db.sqlite3
+db.sqlite3-journal
+staticfiles/
+
+# --- Медиа и логи ---
+bot.log
+media/*
+!media/.gitkeep
+
+# --- Редакторы и ОС ---
 .idea/
+.vscode/
+.DS_Store
