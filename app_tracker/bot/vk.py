@@ -70,6 +70,23 @@ class VK:
             params["keyboard"] = keyboard
         self.call("messages.send", **params)
 
+    def get_user_info(self, user_id: int) -> dict | None:
+        """Запрашивает информацию о пользователе из VK (фото и пол)."""
+        try:
+            # Используем ваш универсальный метод call
+            response = self.call(
+                "users.get",
+                user_ids=user_id,
+                fields="photo_id,sex,photo_200",
+                lang="ru"
+            )
+            # ВК возвращает список, берем первый элемент (наш пользователь)
+            if response and isinstance(response, list):
+                return response[0]
+        except Exception as e:
+            log.error(f"Ошибка при получении данных пользователя {user_id}: {e}")
+        return None
+
     def long_poll(self) -> Iterator[dict]:
         """Бесконечный поток событий сообщества.
 
