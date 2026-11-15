@@ -6,12 +6,17 @@ Django нужен ради базы и админки. Цикл LongPoll ост�
 
 from __future__ import annotations
 
+import logging
+import time
+
 from django.conf import settings
 from django.core.management.base import BaseCommand, CommandError
 
 from app_tracker.bot import handle_update
 from app_tracker.bot.lock import acquire_single_instance_lock
-from app_tracker.bot.vk import VK
+from app_tracker.bot.vk import RETRY_DELAY, VK
+
+log = logging.getLogger(__name__)
 
 
 class Command(BaseCommand):
@@ -31,9 +36,22 @@ class Command(BaseCommand):
         )
 
         try:
-            for update in vk.long_poll():
-                handle_update(vk, update)
+            self._listen(vk)
         except KeyboardInterrupt:
             self.stdout.write("Остановлено вручную")
         finally:
             lock.close()
+
+    def _listen(self, vk: VK) -> None:
+        """Читает события, переживая ошибки сети и сбои в обработчиках."""
+        while True:
+            try:
+                for update in vk.long_poll():
+                    try:
+                        handle_update(vk, update)
+                    except Exception:
+                        # Одно кривое событие не должно останавливать бота.
+                        log.exception("Ошибка обработки события — пропускаю")
+            except Exception:
+                log.exception("LongPoll остановился — перезапускаю через %s с", RETRY_DELAY)
+                time.sleep(RETRY_DELAY)

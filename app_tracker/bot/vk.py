@@ -12,6 +12,7 @@ from __future__ import annotations
 import json
 import logging
 import secrets
+import time
 from typing import Any, Iterator
 
 import requests
@@ -26,6 +27,9 @@ API_VERSION = "5.199"
 
 # Сколько секунд ВК держит LongPoll-соединение, если событий нет.
 LONG_POLL_WAIT = 25
+
+# Пауза перед переподключением, если сеть или ВК недоступны.
+RETRY_DELAY = 5
 
 
 class VK:
@@ -78,18 +82,36 @@ class VK:
         2. GET a_check ждёт до 25 секунд и возвращает новые события.
         3. ts из ответа передаём в следующий запрос — так ВК понимает,
            что мы уже прочитали.
+
+        Сетевые ошибки не пробрасываются наружу: бот переподключается сам,
+        иначе один таймаут `lp.vk.com` останавливал бы его до ручного запуска.
         """
         server, key, ts = self._long_poll_session()
         log.debug("LongPoll сессия: server=%s ts=%s key=%s…", server, ts, key[:6])
 
         while True:
-            response = self.session.get(
-                server,
-                params={"act": "a_check", "key": key, "ts": ts, "wait": LONG_POLL_WAIT},
-                timeout=LONG_POLL_WAIT + 15,
-            )
-            response.raise_for_status()
-            data = response.json()
+            try:
+                response = self.session.get(
+                    server,
+                    params={"act": "a_check", "key": key, "ts": ts, "wait": LONG_POLL_WAIT},
+                    timeout=LONG_POLL_WAIT + 15,
+                )
+                response.raise_for_status()
+                data = response.json()
+            except (requests.RequestException, ValueError) as exc:
+                # Обрыв связи или мусор вместо JSON: ждём и берём новую сессию.
+                log.warning(
+                    "LongPoll: %s, переподключаюсь через %s с",
+                    exc.__class__.__name__,
+                    RETRY_DELAY,
+                )
+                time.sleep(RETRY_DELAY)
+                try:
+                    server, key, ts = self._long_poll_session()
+                except (requests.RequestException, ValueError):
+                    # ВК тоже недоступен — остаёмся на старой сессии и пробуем ещё.
+                    log.warning("LongPoll: не удалось получить новую сессию", exc_info=True)
+                continue
 
             failed = data.get("failed")
             if failed == 1:
