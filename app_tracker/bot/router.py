@@ -168,6 +168,10 @@ def handle_command(
         begin_onboarding(vk, participant, state, peer_id, edit=True)
         return
 
+    if command == "menu:help":
+        show_help(vk, participant, state, peer_id)
+        return
+
     if command == "menu:cancel":
         reset_state(state)
         if participant.has_goals:

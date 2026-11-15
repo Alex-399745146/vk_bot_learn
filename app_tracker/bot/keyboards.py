@@ -41,6 +41,7 @@ def main_menu(*, can_checkin: bool = True, chill_left: int | None = None) -> str
         [
             button("Мои цели", "menu:goals"),
             button("Изменить цели", "menu:edit"),
+            button("Инструкция", "menu:help"),
         ]
     )
     return reply_keyboard(rows)
