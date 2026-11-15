@@ -51,7 +51,7 @@ def chill_warning() -> str:
     return reply_keyboard(
         [
             [
-                button("Передумал", "menu:cancel", color="positive"),
+                button("Назад", "menu:cancel", color="positive"),
                 button("Продолжить", "chill:ok", color="negative"),
             ]
         ]
@@ -64,9 +64,17 @@ def goals_confirm() -> str:
             [
                 button("Верно", "onb:ok", color="positive"),
                 button("Изменить", "onb:edit"),
-            ]
+            ],
+            [button("Назад", "onb:back")],
         ]
     )
+
+
+def goal_input(*, back: bool = True) -> str:
+    """Ввод цели текстом: единственная кнопка — «Назад»."""
+    if not back:
+        return empty_keyboard()
+    return reply_keyboard([[button("Назад", "onb:back")]])
 
 
 def yes_no() -> str:
