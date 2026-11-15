@@ -26,13 +26,6 @@ class Command(BaseCommand):
         if not settings.VK_TOKEN or not settings.VK_GROUP_ID:
             raise CommandError("Заполните VK_TOKEN и VK_GROUP_ID в .env")
 
-        if not settings.SUPERUSER_VK_ID:
-            self.stdout.write(
-                self.style.WARNING(
-                    "SUPERUSER_VK_ID не задан: кнопку «Модераторы» никто не увидит."
-                )
-            )
-
         lock = acquire_single_instance_lock()
         vk = VK(settings.VK_TOKEN, int(settings.VK_GROUP_ID))
 

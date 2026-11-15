@@ -9,10 +9,10 @@ from django.utils import timezone
 log = logging.getLogger(__name__)
 
 
-def send(vk, peer_id: int, text: str, keyboard: str | None = None) -> int | None:
-    """Отправляет сообщение через VK, пишет его в лог и возвращает message_id."""
+def send(vk, peer_id: int, text: str, keyboard: str | None = None) -> None:
+    """Отправляет сообщение через VK и пишет его в лог."""
     log.debug("Ответ в %s: %r", peer_id, text)
-    return vk.send_message(peer_id, text, keyboard=keyboard)
+    vk.send_message(peer_id, text, keyboard=keyboard)
 
 
 def validate_text(text: str) -> str | None:

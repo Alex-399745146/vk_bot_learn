@@ -139,7 +139,7 @@ def confirm_chill(vk, participant: Participant, state: BotState, peer_id: int) -
             f"Chill за месяц: {used + 1} из {CHILL_LIMIT}.\n"
             "Отметиться снова можно завтра."
         ),
-        menu_keyboard(participant),
+        keyboards.main_menu(can_checkin=False, chill_left=0),
     )
 
 
@@ -213,5 +213,5 @@ def answer_report(
         vk,
         peer_id,
         report_text(participant, report, title=report_title(report, exists=False)),
-        menu_keyboard(participant),
+        keyboards.main_menu(can_checkin=not report.completed),
     )

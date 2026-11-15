@@ -63,14 +63,11 @@ class VK:
 
         return payload.get("response")
 
-    def send_message(self, peer_id: int, text: str, *, keyboard: str | None = None) -> int | None:
-        """Отправляет сообщение в диалог и возвращает его message_id.
+    def send_message(self, peer_id: int, text: str, *, keyboard: str | None = None) -> None:
+        """Отправляет сообщение в диалог.
 
         peer_id — идентификатор диалога. Для личных сообщений сообщества
         он совпадает с id пользователя.
-
-        message_id нужен, чтобы потом менять текст или клавиатуру через
-        messages.edit — например, в списке модераторов.
         """
         params: dict[str, Any] = {
             "peer_id": peer_id,
@@ -80,38 +77,7 @@ class VK:
         }
         if keyboard:
             params["keyboard"] = keyboard
-        return self.call("messages.send", **params)
-
-    def edit_message(
-        self, peer_id: int, message_id: int, text: str, *, keyboard: str | None = None
-    ) -> None:
-        """Меняет текст и клавиатуру уже отправленного сообщения сообщества."""
-        params: dict[str, Any] = {
-            "peer_id": peer_id,
-            "message_id": message_id,
-            "message": text,
-        }
-        if keyboard is not None:
-            params["keyboard"] = keyboard
-        self.call("messages.edit", **params)
-
-    def answer_event(
-        self, event_id: str, user_id: int, peer_id: int, *, text: str | None = None
-    ) -> None:
-        """Подтверждает нажатие inline-кнопки, чтобы у клиента не крутился спиннер.
-
-        Если передан text — ВК покажет короткое всплывающее сообщение (snackbar).
-        """
-        params: dict[str, Any] = {
-            "event_id": event_id,
-            "user_id": user_id,
-            "peer_id": peer_id,
-        }
-        if text:
-            params["event_data"] = json.dumps(
-                {"type": "show_snackbar", "text": text}, ensure_ascii=False
-            )
-        self.call("messages.sendMessageEventAnswer", **params)
+        self.call("messages.send", **params)
 
     def long_poll(self) -> Iterator[dict]:
         """Бесконечный поток событий сообщества.

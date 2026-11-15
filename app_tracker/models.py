@@ -20,9 +20,6 @@ class Participant(models.Model):
     goals_month = models.CharField(
         "Месяц целей", max_length=7, blank=True, default="", help_text="Например: 2026-11"
     )
-    is_moderator = models.BooleanField(
-        "Модератор", default=False, help_text="Права выдаёт суперпользователь в боте"
-    )
     created_at = models.DateTimeField("Добавлен", auto_now_add=True)
 
     class Meta:
@@ -62,11 +59,7 @@ class BotState(models.Model):
 
 
 class Report(models.Model):
-    """
-    Отметка за день: какие из трёх целей выполнены,
-    статус дня (Выполнен, Частичный, Chill, Пропуск).
-    """
-
+    """Отметка за день: какие из трёх целей выполнены."""
 
     participant = models.ForeignKey(
         Participant, on_delete=models.CASCADE, related_name="reports", verbose_name="Участник"
