@@ -23,6 +23,9 @@ class Participant(models.Model):
         default=0
     )
 
+    photo_id = models.CharField("ID фото ВК", max_length=100, blank=True, default="")
+    photo_url = models.URLField("URL фото 200px", max_length=255, blank=True, default="")
+    sex = models.SmallIntegerField("Пол", choices=[(0, "—"), (1, "Ж"), (2, "М")], default=0)
     goal_1 = models.CharField("Цель 1", max_length=200, blank=True, default="")
     goal_2 = models.CharField("Цель 2", max_length=200, blank=True, default="")
     goal_3 = models.CharField("Цель 3", max_length=200, blank=True, default="")
