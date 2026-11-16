@@ -70,6 +70,11 @@ class Report(models.Model):
     goal_3_done = models.BooleanField("Цель 3 выполнена", default=False)
     created_at = models.DateTimeField("Создан", auto_now_add=True)
 
+    is_chill = models.BooleanField("Chill", default=False)
+    goal_1_note = models.TextField("Пояснение к цели 1", blank=True, default="")
+    goal_2_note = models.TextField("Пояснение к цели 2", blank=True, default="")
+    goal_3_note = models.TextField("Пояснение к цели 3", blank=True, default="")
+
     class Meta:
         verbose_name = "Отметка"
         verbose_name_plural = "Отметки"
@@ -90,3 +95,59 @@ class Report(models.Model):
     @property
     def completed(self) -> bool:
         return self.goals_done == 3
+
+class GoalPeriod(models.Model):
+    """Период целей участника на конкретный месяц."""
+    participant = models.ForeignKey(Participant, on_delete=models.CASCADE, related_name='goal_periods')
+    month = models.CharField("Месяц", max_length=7)  # Формат "2026-11"
+    goal_1 = models.CharField("Цель 1", max_length=200, blank=True, default="")
+    goal_2 = models.CharField("Цель 2", max_length=200, blank=True, default="")
+    goal_3 = models.CharField("Цель 3", max_length=200, blank=True, default="")
+    status = models.CharField(
+        "Статус",
+        max_length=10,
+        choices=[("active", "Активен"), ("paused", "Пауза")],
+        default="active"
+    )
+
+    class Meta:
+        unique_together = ("participant", "month")
+        verbose_name = "Период целей"
+        verbose_name_plural = "Периоды целей"
+
+    def __str__(self):
+        return f"{self.participant} — {self.month} ({self.status})"
+
+
+class Activity(models.Model):
+    """Дополнительная активность участника (Мой день, Буст, Встреча)."""
+    participant = models.ForeignKey(Participant, on_delete=models.CASCADE, related_name='activities')
+    kind = models.CharField(
+        "Тип",
+        max_length=20,
+        choices=[("self_day", "Мой день"), ("boost", "Буст"), ("meeting", "Встреча")]
+    )
+    note = models.TextField("Примечание", blank=True, default="")
+    points = models.IntegerField("Баллы", default=2)
+    created_at = models.DateTimeField("Создано", auto_now_add=True)
+
+    class Meta:
+        verbose_name = "Активность"
+        verbose_name_plural = "Активности"
+
+
+class Media(models.Model):
+    """Медиафайлы, прикрепленные к отчетам или активностям."""
+    report = models.ForeignKey('Report', on_delete=models.CASCADE, null=True, blank=True, related_name='media_files')
+    activity = models.ForeignKey(Activity, on_delete=models.CASCADE, null=True, blank=True, related_name='media_files')
+    goal_index = models.SmallIntegerField("Номер цели", null=True, blank=True)  # 1, 2 или 3
+    kind = models.CharField("Тип", max_length=10, choices=[("photo", "Фото"), ("video", "Видео")])
+    file = models.FileField("Файл", upload_to='reports/%Y-%m/', blank=True, null=True)
+    external_id = models.CharField("ID во ВК", max_length=100, blank=True, default="")
+    source_url = models.URLField("Ссылка", max_length=500, blank=True, default="")
+    duration = models.IntegerField("Длительность (сек)", null=True, blank=True)
+    created_at = models.DateTimeField("Создано", auto_now_add=True)
+
+    class Meta:
+        verbose_name = "Медиафайл"
+        verbose_name_plural = "Медиафайлы"
