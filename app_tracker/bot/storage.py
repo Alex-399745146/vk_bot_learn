@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import json
 import logging
+from datetime import date
 
 from django.utils import timezone
 
@@ -127,3 +128,17 @@ def update_participant_profile(participant, vk_data: dict) -> None:
 
     if changed:
         participant.save(update_fields=changed)
+
+
+def create_chill_report(participant: Participant, day: date | None = None) -> Report:
+    """Создает отчет со статусом Chill на сегодня."""
+    day = day or timezone.localdate()
+    report, created = Report.objects.get_or_create(
+        participant=participant,
+        date=day,
+        defaults={'is_chill': True}
+    )
+    if not created:
+        report.is_chill = True
+        report.save(update_fields=['is_chill'])
+    return report
