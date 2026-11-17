@@ -78,12 +78,10 @@ class Report(models.Model):
     goal_2_done = models.BooleanField("Цель 2 выполнена", default=False)
     goal_3_done = models.BooleanField("Цель 3 выполнена", default=False)
     is_chill = models.BooleanField("Chill", default=False)
-    created_at = models.DateTimeField("Создан", auto_now_add=True)
-
-    is_chill = models.BooleanField("Chill", default=False)
     goal_1_note = models.TextField("Пояснение к цели 1", blank=True, default="")
     goal_2_note = models.TextField("Пояснение к цели 2", blank=True, default="")
     goal_3_note = models.TextField("Пояснение к цели 3", blank=True, default="")
+    created_at = models.DateTimeField("Создан", auto_now_add=True)
 
     class Meta:
         verbose_name = "Отметка"

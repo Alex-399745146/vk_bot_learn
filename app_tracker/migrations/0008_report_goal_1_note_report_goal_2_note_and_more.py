@@ -7,7 +7,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('app_tracker', '0005_participant_goals_month'),
+        ('app_tracker', '0007_participant_photo_id_participant_photo_url_and_more'),
     ]
 
     operations = [
@@ -25,11 +25,6 @@ class Migration(migrations.Migration):
             model_name='report',
             name='goal_3_note',
             field=models.TextField(blank=True, default='', verbose_name='Пояснение к цели 3'),
-        ),
-        migrations.AddField(
-            model_name='report',
-            name='is_chill',
-            field=models.BooleanField(default=False, verbose_name='Chill'),
         ),
         migrations.CreateModel(
             name='Activity',
