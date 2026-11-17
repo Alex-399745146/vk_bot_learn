@@ -34,25 +34,47 @@ def main_menu(
     can_edit: bool = True,
     pause_left: int | None = None,
 ) -> str:
-    first_row: list[dict] = []
-    if can_checkin:
-        first_row.append(button("Отметиться", "menu:checkin", color="positive"))
-    if chill_left:
-        first_row.append(button(f"❄️ Chill {chill_left}/{CHILL_LIMIT}", "chill:start", color="primary"))
-    if pause_left:
-        first_row.append(
-            button(f"⏸ Пауза {pause_left}/{LIMIT_PAUSE}", "pause:start", color="negative")
-        )
+    """Три этажа: работа, окно целей, постоянные разделы.
 
+    Chill показывается только вместе с «Отметиться», пауза — только
+    вместе с «Изменить цели»: без первой кнопки вторая не имеет смысла.
+    """
     rows: list[list[dict]] = []
-    if first_row:
-        rows.append(first_row)
 
-    second_row = [button("Мои цели", "menu:goals")]
+    work_row: list[dict] = []
+    if can_checkin:
+        work_row.append(button("Отметиться", "menu:checkin", color="positive"))
+        if chill_left:
+            work_row.append(
+                button(
+                    f"❄️ Chill {chill_left}/{CHILL_LIMIT}",
+                    "chill:start",
+                    color="primary",
+                )
+            )
+    if work_row:
+        rows.append(work_row)
+
+    window_row: list[dict] = []
     if can_edit:
-        second_row.append(button("Изменить цели", "menu:edit", color="positive"))
-    second_row.append(button("Инструкция", "menu:help"))
-    rows.append(second_row)
+        window_row.append(button("Изменить цели", "menu:edit", color="positive"))
+        if pause_left:
+            window_row.append(
+                button(
+                    f"⏸ Пауза {pause_left}/{LIMIT_PAUSE}",
+                    "pause:start",
+                    color="negative",
+                )
+            )
+    if window_row:
+        rows.append(window_row)
+
+    rows.append(
+        [
+            button("Мои цели", "menu:goals"),
+            button("Инструкция", "menu:help"),
+        ]
+    )
     return reply_keyboard(rows)
 
 
