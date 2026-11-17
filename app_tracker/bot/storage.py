@@ -11,8 +11,10 @@ import logging
 from django.utils import timezone
 
 from . import states
+from .constants import LIMIT_PAUSE
 from .helpers import fetch_user
-from app_tracker.models import BotState, Participant, Report
+from app_tracker.models import BotState, GoalPeriod, Participant, Report
+from app_tracker.periods import target_goals_month, work_bounds, work_month
 
 log = logging.getLogger(__name__)
 
@@ -33,7 +35,57 @@ def get_participant(vk, vk_id: int) -> tuple[Participant, bool]:
             participant.save(update_fields=changed)
 
     update_participant_profile(participant, user)
+    sync_period_goals(participant)
     return participant, created
+
+
+def sync_period_goals(participant: Participant, day=None) -> GoalPeriod | None:
+    """Переносит цели периода в активные поля участника в рабочий период."""
+    day = day or timezone.localdate()
+    month = work_month(day)
+    if month is None:
+        return None
+
+    period = GoalPeriod.objects.filter(participant=participant, month=month).first()
+    if period is None:
+        return None
+
+    if period.status == "paused":
+        if participant.goals_month or any(participant.goals):
+            participant.goal_1 = participant.goal_2 = participant.goal_3 = ""
+            participant.goals_month = ""
+            participant.save(update_fields=["goal_1", "goal_2", "goal_3", "goals_month"])
+        return period
+
+    if participant.goals_month != month or participant.goals != period.goals:
+        participant.goal_1, participant.goal_2, participant.goal_3 = period.goals
+        participant.goals_month = month
+        participant.save(update_fields=["goal_1", "goal_2", "goal_3", "goals_month"])
+
+    return period
+
+
+def pause_count(participant: Participant, year: int | None = None) -> int:
+    """Сколько пауз взято за календарный год."""
+    year = year or timezone.localdate().year
+    return GoalPeriod.objects.filter(
+        participant=participant, status="paused", paused_at__year=year
+    ).count()
+
+
+def pause_left(participant: Participant, day=None) -> int:
+    """Сколько пауз осталось в этом календарном году."""
+    day = day or timezone.localdate()
+    return max(0, LIMIT_PAUSE - pause_count(participant, day.year))
+
+
+def target_paused(participant: Participant, day=None) -> bool:
+    """Выбрана ли пауза на период, который ставится в текущем окне."""
+    day = day or timezone.localdate()
+    target = target_goals_month(day)
+    return GoalPeriod.objects.filter(
+        participant=participant, month=target, status="paused"
+    ).exists()
 
 
 def today_report(participant: Participant) -> Report | None:
@@ -44,23 +96,36 @@ def today_report(participant: Participant) -> Report | None:
 
 
 def chill_count(participant: Participant, day=None) -> int:
-    """Сколько Chill уже использовано в месяце дня (по умолчанию — сегодня)."""
+    """Сколько Chill использовано в текущем рабочем периоде (3–28)."""
     day = day or timezone.localdate()
+    month = work_month(day)
+    if month is None:
+        return 0
+
+    start, end = work_bounds(month)
     return Report.objects.filter(
         participant=participant,
-        date__year=day.year,
-        date__month=day.month,
+        date__range=(start, end),
         is_chill=True,
     ).count()
 
 
-def month_points(participant: Participant, day=None) -> int:
-    """Баллы за месяц: по 1 за каждый день, где выполнены все три цели."""
+def period_points(participant: Participant, day=None) -> int:
+    """Баллы периода: по 1 за каждый день 3–28, где выполнены все три цели."""
     day = day or timezone.localdate()
+    month = work_month(day) or participant.goals_month
+    if not month:
+        return 0
+
+    if GoalPeriod.objects.filter(
+        participant=participant, month=month, status="paused"
+    ).exists():
+        return 0
+
+    start, end = work_bounds(month)
     return Report.objects.filter(
         participant=participant,
-        date__year=day.year,
-        date__month=day.month,
+        date__range=(start, end),
         is_chill=False,
         goal_1_done=True,
         goal_2_done=True,

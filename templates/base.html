@@ -153,13 +153,17 @@
 
     .motivation-text {
       margin: 0;
-      font-size: .92rem;
+      font-size: 1rem;
       color: var(--magma-text);
+      min-height: 1.5em;
+      transition: opacity .32s ease;
     }
+
+    .motivation-text.is-fading { opacity: 0; }
 
     @media (max-width: 575.98px) {
       .motivation-title { font-size: .72rem; letter-spacing: .08em; }
-      .motivation-text { font-size: .84rem; }
+      .motivation-text { font-size: .86rem; min-height: 3em; }
     }
 
     .magma-title {
@@ -448,9 +452,9 @@
 
   <div class="motivation-strip">
     <div class="container">
-      <p class="motivation-title">🔥 Твой главный соперник — вчерашний ты</p>
-      <p class="motivation-text">
-        Три цели. Один закрытый день. Ещё один шаг к форме, которой будешь гордиться.
+      <p class="motivation-title">🔥 Горячий разгон · мотивация</p>
+      <p class="motivation-text" id="motivation-slogan">
+        Твой главный соперник — вчерашний ты.
       </p>
     </div>
   </div>
@@ -473,6 +477,7 @@
     src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
     defer
   ></script>
+  <script src="{% static 'js/motivation.js' %}" defer></script>
   {% block extra_scripts %}{% endblock %}
 </body>
 </html>

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import json
 
-from .constants import CHILL_LIMIT
+from .constants import CHILL_LIMIT, LIMIT_PAUSE
 
 
 def button(label: str, cmd: str, *, color: str = "secondary") -> dict:
@@ -27,20 +27,51 @@ def empty_keyboard() -> str:
     return json.dumps({"buttons": []}, ensure_ascii=False)
 
 
-def main_menu(*, can_checkin: bool = True, chill_left: int | None = None) -> str:
-    first_row: list[dict] = []
-    if can_checkin:
-        first_row.append(button("Отметиться", "menu:checkin", color="positive"))
-    if chill_left:
-        first_row.append(button(f"❄️ Chill {chill_left}/{CHILL_LIMIT}", "chill:start", color="primary"))
+def main_menu(
+    *,
+    can_checkin: bool = True,
+    chill_left: int | None = None,
+    can_edit: bool = True,
+    pause_left: int | None = None,
+) -> str:
+    """Три этажа: работа, окно целей, постоянные разделы.
 
+    Chill показывается только вместе с «Отметиться», пауза — только
+    вместе с «Изменить цели»: без первой кнопки вторая не имеет смысла.
+    """
     rows: list[list[dict]] = []
-    if first_row:
-        rows.append(first_row)
+
+    work_row: list[dict] = []
+    if can_checkin:
+        work_row.append(button("Отметиться", "menu:checkin", color="positive"))
+        if chill_left:
+            work_row.append(
+                button(
+                    f"❄️ Chill {chill_left}/{CHILL_LIMIT}",
+                    "chill:start",
+                    color="primary",
+                )
+            )
+    if work_row:
+        rows.append(work_row)
+
+    window_row: list[dict] = []
+    if can_edit:
+        window_row.append(button("Изменить цели", "menu:edit", color="positive"))
+        if pause_left:
+            window_row.append(
+                button(
+                    f"⏸ Пауза {pause_left}/{LIMIT_PAUSE}",
+                    "pause:start",
+                    color="negative",
+                )
+            )
+    if window_row:
+        rows.append(window_row)
+
     rows.append(
         [
             button("Мои цели", "menu:goals"),
-            button("Изменить цели", "menu:edit"),
             button("Инструкция", "menu:help"),
         ]
     )
@@ -54,6 +85,18 @@ def chill_warning() -> str:
             [
                 button("Назад", "menu:cancel", color="positive"),
                 button("Продолжить", "chill:ok", color="negative"),
+            ]
+        ]
+    )
+
+
+def pause_warning() -> str:
+    """Предупреждение перед паузой."""
+    return reply_keyboard(
+        [
+            [
+                button("Назад", "pause:cancel", color="positive"),
+                button("Продолжить", "pause:ok", color="negative"),
             ]
         ]
     )

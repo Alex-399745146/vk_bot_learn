@@ -13,13 +13,17 @@ from __future__ import annotations
 
 import logging
 
+from django.utils import timezone
+
 from . import keyboards, states
 from .helpers import send
 from app_tracker.models import BotState, Participant
+from app_tracker.periods import goals_window_label, is_goals_window, is_work_period
 from .onboarding import add_goal, begin_onboarding, confirm_goals, go_back
+from .pauses import cancel_pause, confirm_pause, handle_pause
 from .reporting import answer_report, confirm_chill, handle_checkin, handle_chill, start_report
-from .screens import expired, menu_keyboard, show_help, show_menu
-from .storage import get_participant, payload_command, reset_state
+from .screens import expired, menu_keyboard, no_goals_hint, show_help, show_menu
+from .storage import get_participant, payload_command, reset_state, target_paused
 
 log = logging.getLogger(__name__)
 
@@ -88,10 +92,7 @@ def handle_text(vk, participant: Participant, state: BotState, peer_id: int, tex
         return
 
     if normalized in START_WORDS:
-        if participant.has_goals:
-            show_menu(vk, participant, state, peer_id)
-        else:
-            begin_onboarding(vk, participant, state, peer_id)
+        show_menu(vk, participant, state, peer_id)
         return
 
     if state.state == states.ONBOARD_GOAL:
@@ -120,10 +121,11 @@ def handle_text(vk, participant: Participant, state: BotState, peer_id: int, tex
         )
         return
 
-    if not participant.has_goals:
-        begin_onboarding(vk, participant, state, peer_id)
-    else:
-        show_menu(vk, participant, state, peer_id, intro="Выбери действие кнопкой ниже.")
+    if state.state == states.PAUSE_CONFIRM:
+        send(vk, peer_id, "Нажми «Назад» или «Продолжить».", keyboards.pause_warning())
+        return
+
+    show_menu(vk, participant, state, peer_id, intro="Выбери действие кнопкой ниже.")
 
 
 def handle_command(
@@ -157,14 +159,41 @@ def handle_command(
         confirm_chill(vk, participant, state, peer_id)
         return
 
+    if command == "pause:start":
+        handle_pause(vk, participant, state, peer_id)
+        return
+
+    if command == "pause:ok":
+        confirm_pause(vk, participant, state, peer_id)
+        return
+
+    if command == "pause:cancel":
+        cancel_pause(vk, participant, state, peer_id)
+        return
+
     if command == "menu:goals":
-        if participant.has_goals:
-            show_menu(vk, participant, state, peer_id)
-        else:
-            begin_onboarding(vk, participant, state, peer_id)
+        show_menu(vk, participant, state, peer_id)
         return
 
     if command == "menu:edit":
+        day = timezone.localdate()
+        if target_paused(participant, day):
+            send(
+                vk,
+                peer_id,
+                "На этот период выбрана пауза — цели не ставятся.",
+                menu_keyboard(participant),
+            )
+            return
+        if not is_goals_window(day):
+            send(
+                vk,
+                peer_id,
+                "Окно целей закрыто. Поставить или изменить цели можно "
+                f"с {goals_window_label()} числа.",
+                menu_keyboard(participant),
+            )
+            return
         begin_onboarding(vk, participant, state, peer_id, edit=True)
         return
 
@@ -174,17 +203,14 @@ def handle_command(
 
     if command == "menu:cancel":
         reset_state(state)
-        if participant.has_goals:
-            show_menu(vk, participant, state, peer_id)
-        else:
-            begin_onboarding(vk, participant, state, peer_id)
+        show_menu(vk, participant, state, peer_id)
         return
 
     if command == "rep:edit":
-        if participant.has_goals:
+        if is_work_period(timezone.localdate()) and participant.has_goals:
             start_report(vk, participant, state, peer_id)
         else:
-            begin_onboarding(vk, participant, state, peer_id)
+            send(vk, peer_id, no_goals_hint(participant), menu_keyboard(participant))
         return
 
     if command == "rep:yes":

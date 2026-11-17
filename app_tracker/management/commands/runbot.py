@@ -12,7 +12,7 @@ import time
 from django.conf import settings
 from django.core.management.base import BaseCommand, CommandError
 
-from app_tracker.bot import handle_update
+from app_tracker.bot.router import handle_update
 from app_tracker.bot.lock import acquire_single_instance_lock
 from app_tracker.bot.vk import RETRY_DELAY, VK
 

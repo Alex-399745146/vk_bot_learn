@@ -46,7 +46,7 @@
         </div>
 
         <p class="text-muted-magma mb-2">
-          Цели на {{ goals_month_label }} · в проекте с {{ participant.created_at|date:"d.m.Y" }}
+          Период {{ period_label }} · в проекте с {{ participant.created_at|date:"d.m.Y" }}
         </p>
 
         <div class="d-flex flex-wrap gap-2 justify-content-center justify-content-sm-start">
@@ -74,7 +74,7 @@
       <div class="col-12 col-lg-7">
         <div class="card card-magma h-100 p-4">
           <div class="d-flex justify-content-between align-items-center mb-3">
-            <h2 class="h5 mb-0 card-title-magma">Цели на {{ goals_month_label }}</h2>
+            <h2 class="h5 mb-0 card-title-magma">Цели на период {{ period_label }}</h2>
             <span class="badge badge-magma">3 цели</span>
           </div>
 
@@ -86,8 +86,16 @@
             </ul>
           {% else %}
             <p class="text-muted-magma mb-0">
-              На этот месяц цели не заданы. Напиши боту <strong>/start</strong>
-              и заполни их.
+              {% if paused %}
+                ⏸ На этот период у тебя пауза — цели не ставятся.
+              {% elif not work_active %}
+                Цели на период {{ target_period_label }} ещё не поставлены —
+                окно открыто с 28 по 3 число.
+              {% elif goals_window %}
+                Сегодня последний день окна — поставь цели в боте.
+              {% else %}
+                Цели на этот период не поставлены. Окно откроется 28-го.
+              {% endif %}
             </p>
           {% endif %}
         </div>
@@ -96,7 +104,17 @@
       <div class="col-12 col-lg-5">
         <div class="card card-magma h-100 p-4">
           <h2 class="h5 mb-3 card-title-magma">Сегодня</h2>
-          {% if today_report %}
+          {% if paused %}
+            <p class="mb-2">⏸ Пауза на этот период.</p>
+            <span class="badge badge-magma">Баллы — 0, отметки недоступны</span>
+          {% elif not work_active %}
+            <p class="mb-2">Перерыв между периодами.</p>
+            <span class="badge badge-magma">Новый период — {{ target_period_label }}</span>
+          {% elif not goals %}
+            <p class="text-muted-magma mb-0">
+              Цели на этот период не поставлены — отметка недоступна.
+            </p>
+          {% elif today_report %}
             {% if today_report.is_chill %}
               <p class="mb-2">Сегодня Chill — отметка закрыта до завтра.</p>
               <span class="badge text-bg-info">Chill 🌀</span>
@@ -123,26 +141,26 @@
     <div class="row g-3 mb-4">
       <div class="col-6 col-lg">
         <div class="stat-card">
-          <div class="stat-value">{{ month_total }}</div>
+          <div class="stat-value">{{ period_total }}</div>
           <div class="stat-label">дней с целями</div>
         </div>
       </div>
       <div class="col-6 col-lg">
         <div class="stat-card">
-          <div class="stat-value">{{ month_completed }}</div>
+          <div class="stat-value">{{ period_completed }}</div>
           <div class="stat-label">выполнено полностью</div>
         </div>
       </div>
       <div class="col-6 col-lg">
         <div class="stat-card">
-          <div class="stat-value">{{ month_partial }}</div>
+          <div class="stat-value">{{ period_partial }}</div>
           <div class="stat-label">частично</div>
         </div>
       </div>
       <div class="col-6 col-lg">
         <div class="stat-card">
-          <div class="stat-value">{{ month_chill }}</div>
-          <div class="stat-label">Chill за месяц</div>
+          <div class="stat-value">{{ period_chill }}</div>
+          <div class="stat-label">Chill за период</div>
         </div>
       </div>
       <div class="col-6 col-lg">

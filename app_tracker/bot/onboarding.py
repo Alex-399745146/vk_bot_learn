@@ -1,14 +1,28 @@
-"""Онбординг: ввод трёх целей на текущий месяц."""
+"""Онбординг: ввод трёх целей на сезон."""
 
 from __future__ import annotations
 
+from django.utils import timezone
+
 from . import keyboards, states
 from .constants import GOAL_COUNT
-from .helpers import current_month, send, validate_text
-from app_tracker.models import BotState, Participant
-from .screens import expired, show_menu
+from .helpers import send, validate_text
+from app_tracker.models import BotState, GoalPeriod, Participant
+from app_tracker.periods import (
+    goals_window_label,
+    is_goals_window,
+    month_key,
+    period_label,
+    target_goals_month,
+)
+from .screens import expired, menu_keyboard, show_menu
 from .storage import reset_state, set_state
-from .texts import goals_text, month_label
+from .texts import goals_text
+
+PARTICIPATION_NOTE = (
+    "Ставя цели, ты автоматически участвуешь в сезоне — так это "
+    "расценивают организаторы."
+)
 
 
 def begin_onboarding(
@@ -20,20 +34,22 @@ def begin_onboarding(
     edit: bool = False,
 ) -> None:
     """Начинает или перезапускает ввод трёх целей и очищает черновик."""
+    day = timezone.localdate()
     set_state(state, states.ONBOARD_GOAL, {"goals": [], "edit": edit})
     name = participant.first_name or "друг"
-    month = month_label(current_month())
+    period = period_label(target_goals_month(day))
 
     if edit:
         text = (
-            f"{name}, давай обновим цели на {month}.\n\n"
+            f"{name}, давай обновим цели на период {period}.\n\n"
             "Цель 1 из 3. Напиши первую цель.\n"
             "Например: «активность >15 минут»."
         )
     else:
         text = (
             f"Привет, {name}! Я бот, я помогу тебе.\n\n"
-            f"Давай поставим три цели на {month}. Их нужно выполнять каждый день.\n"
+            f"Давай поставим три цели на период {period}. "
+            "Их нужно выполнять каждый день.\n"
             "Например: «активность 15 минут», «зарядка после сна», "
             "«без сахара в кофе».\n\n"
             "Цель 1 из 3. Напиши первую цель."
@@ -49,7 +65,7 @@ def add_goal(
     peer_id: int,
     text: str,
 ) -> None:
-    """Принимает очередную цель, складывает её в BotState.data и после третьей показывает подтверждение."""
+    """Принимает очередную цель и после третьей показывает подтверждение."""
     data = dict(state.data or {})
     goals = list(data.get("goals") or [])
     edit = bool(data.get("edit"))
@@ -75,7 +91,8 @@ def add_goal(
     send(
         vk,
         peer_id,
-        f"{goals_text(goals, current_month())}\n\nВсё верно?",
+        f"{goals_text(goals, target_goals_month(timezone.localdate()))}\n\n"
+        f"{PARTICIPATION_NOTE}\n\nВсё верно?",
         keyboards.goals_confirm(),
     )
 
@@ -112,24 +129,26 @@ def go_back(vk, participant: Participant, state: BotState, peer_id: int) -> None
         )
         return
 
-    # Черновик пуст: в режиме редактирования выходим в меню, старые цели целы.
-    if edit and participant.has_goals:
-        reset_state(state)
-        show_menu(vk, participant, state, peer_id, intro="Цели не изменены.")
-        return
-
-    send(
-        vk,
-        peer_id,
-        "Это первый шаг — напиши первую цель.",
-        keyboards.goal_input(back=False),
-    )
+    reset_state(state)
+    show_menu(vk, participant, state, peer_id, intro="Цели не изменены.")
 
 
 def confirm_goals(vk, participant: Participant, state: BotState, peer_id: int) -> None:
-    """Сохраняет три цели в Participant, ставит текущий месяц и показывает меню."""
+    """Сохраняет три цели на целевой сезон и показывает меню."""
     if state.state != states.ONBOARD_CONFIRM:
         expired(vk, participant, peer_id)
+        return
+
+    day = timezone.localdate()
+    if not is_goals_window(day):
+        reset_state(state)
+        send(
+            vk,
+            peer_id,
+            "Окно целей закрыто: поставить или изменить цели можно "
+            f"с {goals_window_label()} числа.",
+            menu_keyboard(participant),
+        )
         return
 
     goals = list((state.data or {}).get("goals") or [])
@@ -138,7 +157,31 @@ def confirm_goals(vk, participant: Participant, state: BotState, peer_id: int) -
         begin_onboarding(vk, participant, state, peer_id, edit=edit)
         return
 
-    participant.goal_1, participant.goal_2, participant.goal_3 = goals
-    participant.goals_month = current_month()
-    participant.save(update_fields=["goal_1", "goal_2", "goal_3", "goals_month"])
-    show_menu(vk, participant, state, peer_id, intro="Записал. Цели на месяц сохранены.")
+    month = target_goals_month(day)
+    GoalPeriod.objects.update_or_create(
+        participant=participant,
+        month=month,
+        defaults={
+            "goal_1": goals[0],
+            "goal_2": goals[1],
+            "goal_3": goals[2],
+            "status": "active",
+        },
+    )
+
+    if month == month_key(day):
+        participant.goal_1, participant.goal_2, participant.goal_3 = goals
+        participant.goals_month = month
+        participant.save(update_fields=["goal_1", "goal_2", "goal_3", "goals_month"])
+
+    reset_state(state)
+
+    if month == month_key(day):
+        intro = "Записал. Цели на текущий период сохранены."
+    else:
+        intro = (
+            f"Записал. Цели на период {period_label(month)} сохранены — "
+            "сезон начнётся 3-го."
+        )
+
+    show_menu(vk, participant, state, peer_id, intro=intro)

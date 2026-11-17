@@ -1,10 +1,9 @@
 """Пакет бота: транспорт, сценарии и вспомогательные модули.
 
-Публичная точка входа для runbot.py — handle_update.
+Публичная точка входа — `app_tracker.bot.router.handle_update`.
+Импорт лежит в router, чтобы пакет не тянул модели при каждом импорте.
 """
 
 from __future__ import annotations
 
-from app_tracker.bot.router import handle_update
-
-__all__ = ["handle_update"]
+__all__: list[str] = []
