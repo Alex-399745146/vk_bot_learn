@@ -12,7 +12,8 @@ from django.utils import timezone
 
 from . import states
 from .helpers import fetch_user
-from app_tracker.models import BotState, Participant, Report
+from app_tracker.models import BotState, GoalPeriod, Participant, Report
+from app_tracker.periods import work_bounds, work_month
 
 log = logging.getLogger(__name__)
 
@@ -33,7 +34,27 @@ def get_participant(vk, vk_id: int) -> tuple[Participant, bool]:
             participant.save(update_fields=changed)
 
     update_participant_profile(participant, user)
+    sync_period_goals(participant)
     return participant, created
+
+
+def sync_period_goals(participant: Participant, day=None) -> GoalPeriod | None:
+    """Переносит цели периода в активные поля участника в рабочий период."""
+    day = day or timezone.localdate()
+    month = work_month(day)
+    if month is None:
+        return None
+
+    period = GoalPeriod.objects.filter(participant=participant, month=month).first()
+    if period is None or period.status != "active":
+        return period
+
+    if participant.goals_month != month or participant.goals != period.goals:
+        participant.goal_1, participant.goal_2, participant.goal_3 = period.goals
+        participant.goals_month = month
+        participant.save(update_fields=["goal_1", "goal_2", "goal_3", "goals_month"])
+
+    return period
 
 
 def today_report(participant: Participant) -> Report | None:
@@ -44,23 +65,31 @@ def today_report(participant: Participant) -> Report | None:
 
 
 def chill_count(participant: Participant, day=None) -> int:
-    """Сколько Chill уже использовано в месяце дня (по умолчанию — сегодня)."""
+    """Сколько Chill использовано в текущем рабочем периоде (3–28)."""
     day = day or timezone.localdate()
+    month = work_month(day)
+    if month is None:
+        return 0
+
+    start, end = work_bounds(month)
     return Report.objects.filter(
         participant=participant,
-        date__year=day.year,
-        date__month=day.month,
+        date__range=(start, end),
         is_chill=True,
     ).count()
 
 
-def month_points(participant: Participant, day=None) -> int:
-    """Баллы за месяц: по 1 за каждый день, где выполнены все три цели."""
+def period_points(participant: Participant, day=None) -> int:
+    """Баллы периода: по 1 за каждый день 3–28, где выполнены все три цели."""
     day = day or timezone.localdate()
+    month = work_month(day) or participant.goals_month
+    if not month:
+        return 0
+
+    start, end = work_bounds(month)
     return Report.objects.filter(
         participant=participant,
-        date__year=day.year,
-        date__month=day.month,
+        date__range=(start, end),
         is_chill=False,
         goal_1_done=True,
         goal_2_done=True,

@@ -27,7 +27,12 @@ def empty_keyboard() -> str:
     return json.dumps({"buttons": []}, ensure_ascii=False)
 
 
-def main_menu(*, can_checkin: bool = True, chill_left: int | None = None) -> str:
+def main_menu(
+    *,
+    can_checkin: bool = True,
+    chill_left: int | None = None,
+    can_edit: bool = True,
+) -> str:
     first_row: list[dict] = []
     if can_checkin:
         first_row.append(button("Отметиться", "menu:checkin", color="positive"))
@@ -37,13 +42,12 @@ def main_menu(*, can_checkin: bool = True, chill_left: int | None = None) -> str
     rows: list[list[dict]] = []
     if first_row:
         rows.append(first_row)
-    rows.append(
-        [
-            button("Мои цели", "menu:goals"),
-            button("Изменить цели", "menu:edit"),
-            button("Инструкция", "menu:help"),
-        ]
-    )
+
+    second_row = [button("Мои цели", "menu:goals")]
+    if can_edit:
+        second_row.append(button("Изменить цели", "menu:edit", color="positive"))
+    second_row.append(button("Инструкция", "menu:help"))
+    rows.append(second_row)
     return reply_keyboard(rows)
 
 

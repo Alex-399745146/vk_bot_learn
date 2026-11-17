@@ -7,6 +7,8 @@ from __future__ import annotations
 from django.db import models
 from django.utils import timezone
 
+from .periods import work_month
+
 
 class Participant(models.Model):
     """Участник и его цели на текущий месяц."""
@@ -46,9 +48,9 @@ class Participant(models.Model):
 
     @property
     def has_goals(self) -> bool:
-        """Цели заполнены и поставлены на текущий месяц."""
-        current = timezone.localdate().strftime("%Y-%m")
-        return self.goals_month == current and all(self.goals)
+        """Цели заполнены и относятся к идущему рабочему периоду."""
+        active = work_month(timezone.localdate())
+        return active is not None and self.goals_month == active and all(self.goals)
 
 
 class BotState(models.Model):
@@ -126,6 +128,10 @@ class GoalPeriod(models.Model):
 
     def __str__(self):
         return f"{self.participant} — {self.month} ({self.status})"
+
+    @property
+    def goals(self) -> list[str]:
+        return [self.goal_1, self.goal_2, self.goal_3]
 
 
 class Activity(models.Model):

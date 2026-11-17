@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-from datetime import date
-
 from django.contrib import messages
 from django.contrib.auth import login
 from django.contrib.auth.decorators import login_required
@@ -12,9 +10,23 @@ from django.db import transaction
 from django.shortcuts import redirect, render
 from django.urls import reverse_lazy
 from django.utils import timezone
-from django.utils.formats import date_format
 
-from app_tracker.models import Participant
+from app_tracker.bot.constants import (
+    CHILL_LIMIT,
+    ON_PERIOD_GOALS_END,
+    ON_PERIOD_GOALS_START,
+    ON_PERIOD_WORK_END,
+    ON_PERIOD_WORK_START,
+)
+from app_tracker.bot.storage import sync_period_goals
+from app_tracker.models import GoalPeriod, Participant
+from app_tracker.periods import (
+    is_goals_window,
+    period_label,
+    target_goals_month,
+    work_bounds,
+    work_month,
+)
 
 from .forms import LoginForm, RegisterForm
 
@@ -49,13 +61,23 @@ def register(request):
 
 
 def help_page(request):
-    """Публичная инструкция: как работает бот и веб-кабинет."""
-    return render(request, "app_users/help.html")
+    """Публичная инструкция: периоды, цели, отметки и Chill."""
+    return render(
+        request,
+        "app_users/help.html",
+        {
+            "work_start": ON_PERIOD_WORK_START,
+            "work_end": ON_PERIOD_WORK_END,
+            "goals_start": ON_PERIOD_GOALS_START,
+            "goals_end": ON_PERIOD_GOALS_END,
+            "chill_limit": CHILL_LIMIT,
+        },
+    )
 
 
 @login_required
 def dashboard(request):
-    """Показывает цели, сегодняшнюю отметку и последние результаты."""
+    """Показывает цели периода, сегодняшнюю отметку и последние результаты."""
     profile = getattr(request.user, "profile", None)
     participant = profile.participant if profile else None
 
@@ -64,11 +86,37 @@ def dashboard(request):
         return render(request, "app_users/dashboard.html", context)
 
     today = timezone.localdate()
-    month_reports = participant.reports.filter(
-        date__year=today.year, date__month=today.month
-    )
-    chill_total = month_reports.filter(is_chill=True).count()
-    goal_reports = month_reports.filter(is_chill=False)
+    sync_period_goals(participant, today)
+
+    work = work_month(today)
+    target = target_goals_month(today)
+    window = is_goals_window(today)
+
+    planned = None
+    if work is None:
+        planned = GoalPeriod.objects.filter(
+            participant=participant, month=target, status="active"
+        ).first()
+
+    if work and participant.has_goals:
+        goals = participant.goals
+        label = period_label(work)
+    elif work is None and planned:
+        goals = planned.goals
+        label = period_label(target)
+    else:
+        goals = []
+        label = period_label(work or participant.goals_month or target)
+
+    stats_month = work or participant.goals_month
+    if stats_month:
+        start, end = work_bounds(stats_month)
+        period_reports = participant.reports.filter(date__range=(start, end))
+    else:
+        period_reports = participant.reports.none()
+
+    chill_total = period_reports.filter(is_chill=True).count()
+    goal_reports = period_reports.filter(is_chill=False)
     total = goal_reports.count()
     completed = goal_reports.filter(
         goal_1_done=True, goal_2_done=True, goal_3_done=True
@@ -76,14 +124,17 @@ def dashboard(request):
 
     context.update(
         {
-            "goals": participant.goals if participant.has_goals else [],
-            "goals_month_label": _month_label(participant.goals_month or _month_key(today)),
-            "today_report": participant.reports.filter(date=today).first(),
+            "goals": goals,
+            "period_label": label,
+            "work_active": work is not None,
+            "goals_window": window,
+            "target_period_label": period_label(target),
+            "today_report": participant.reports.filter(date=today).first() if work else None,
             "reports": participant.reports.order_by("-date")[:14],
-            "month_total": total,
-            "month_completed": completed,
-            "month_partial": total - completed,
-            "month_chill": chill_total,
+            "period_total": total,
+            "period_completed": completed,
+            "period_partial": total - completed,
+            "period_chill": chill_total,
             "streak": _streak(participant),
         }
     )
@@ -98,16 +149,3 @@ def _streak(participant: Participant) -> int:
             break
         streak += 1
     return streak
-
-
-def _month_key(day: date) -> str:
-    return day.strftime("%Y-%m")
-
-
-def _month_label(month_key: str) -> str:
-    try:
-        year, month = (int(part) for part in month_key.split("-"))
-        day = date(year, month, 1)
-    except (ValueError, TypeError):
-        return month_key
-    return date_format(day, "F Y").capitalize()
