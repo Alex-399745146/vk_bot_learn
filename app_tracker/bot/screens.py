@@ -22,6 +22,7 @@ from .storage import (
     period_points,
     reset_state,
     sync_period_goals,
+    target_paused,
     today_report,
 )
 from .texts import HELP_TEXT, goals_bulletin
@@ -60,6 +61,9 @@ def show_menu(
     report = today_report(participant)
     can_checkin, chill_left, _ = _menu_flags(participant, report, day)
 
+    window = is_goals_window(day)
+    can_edit = window and not target_paused(participant, day)
+
     send(
         vk,
         peer_id,
@@ -67,8 +71,8 @@ def show_menu(
         keyboards.main_menu(
             can_checkin=can_checkin,
             chill_left=chill_left,
-            can_edit=is_goals_window(day),
-            pause_left=pause_left(participant, day) if is_goals_window(day) else 0,
+            can_edit=can_edit,
+            pause_left=pause_left(participant, day) if can_edit else 0,
         ),
     )
 
@@ -115,10 +119,13 @@ def _menu_card(
             lines.append(f"🟡 Сегодня отмечено {report.goals_done} из 3 · можно дополнить")
 
         if is_goals_window(day):
-            left = pause_left(participant, day)
-            lines += ["", "🎯 Окно целей открыто: можно поставить цели на следующий период."]
-            if left:
-                lines.append(f"⏸ Пауз осталось: {left} из {LIMIT_PAUSE}.")
+            if target_paused(participant, day):
+                lines += ["", "⏸ На следующий период выбрана пауза."]
+            else:
+                left = pause_left(participant, day)
+                lines += ["", "🎯 Окно целей открыто: можно поставить цели на следующий период."]
+                if left:
+                    lines.append(f"⏸ Пауз осталось: {left} из {LIMIT_PAUSE}.")
 
     elif working:
         target = target_goals_month(day)
@@ -190,11 +197,13 @@ def menu_keyboard(participant: Participant) -> str:
     day = timezone.localdate()
     report = today_report(participant)
     can_checkin, chill_left, _ = _menu_flags(participant, report, day)
+    window = is_goals_window(day)
+    can_edit = window and not target_paused(participant, day)
     return keyboards.main_menu(
         can_checkin=can_checkin,
         chill_left=chill_left,
-        can_edit=is_goals_window(day),
-        pause_left=pause_left(participant, day) if is_goals_window(day) else 0,
+        can_edit=can_edit,
+        pause_left=pause_left(participant, day) if can_edit else 0,
     )
 
 

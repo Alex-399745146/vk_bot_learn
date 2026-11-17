@@ -14,7 +14,7 @@ from . import states
 from .constants import LIMIT_PAUSE
 from .helpers import fetch_user
 from app_tracker.models import BotState, GoalPeriod, Participant, Report
-from app_tracker.periods import work_bounds, work_month
+from app_tracker.periods import target_goals_month, work_bounds, work_month
 
 log = logging.getLogger(__name__)
 
@@ -77,6 +77,15 @@ def pause_left(participant: Participant, day=None) -> int:
     """Сколько пауз осталось в этом календарном году."""
     day = day or timezone.localdate()
     return max(0, LIMIT_PAUSE - pause_count(participant, day.year))
+
+
+def target_paused(participant: Participant, day=None) -> bool:
+    """Выбрана ли пауза на период, который ставится в текущем окне."""
+    day = day or timezone.localdate()
+    target = target_goals_month(day)
+    return GoalPeriod.objects.filter(
+        participant=participant, month=target, status="paused"
+    ).exists()
 
 
 def today_report(participant: Participant) -> Report | None:

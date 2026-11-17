@@ -23,7 +23,7 @@ from .onboarding import add_goal, begin_onboarding, confirm_goals, go_back
 from .pauses import cancel_pause, confirm_pause, handle_pause
 from .reporting import answer_report, confirm_chill, handle_checkin, handle_chill, start_report
 from .screens import expired, menu_keyboard, no_goals_hint, show_help, show_menu
-from .storage import get_participant, payload_command, reset_state
+from .storage import get_participant, payload_command, reset_state, target_paused
 
 log = logging.getLogger(__name__)
 
@@ -176,7 +176,16 @@ def handle_command(
         return
 
     if command == "menu:edit":
-        if not is_goals_window(timezone.localdate()):
+        day = timezone.localdate()
+        if target_paused(participant, day):
+            send(
+                vk,
+                peer_id,
+                "На этот период выбрана пауза — цели не ставятся.",
+                menu_keyboard(participant),
+            )
+            return
+        if not is_goals_window(day):
             send(
                 vk,
                 peer_id,
