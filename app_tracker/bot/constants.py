@@ -22,3 +22,7 @@ ON_PERIOD_WORK_END = 28
 
 # Сколько пауз можно взять за календарный год.
 LIMIT_PAUSE = 3
+MEDIA_PER_GOAL = 3
+MEDIA_PER_ACTIVITY = 1
+VIDEO_MAX_SECONDS = 60
+MEDIA_RETENTION_MONTHS = 2
