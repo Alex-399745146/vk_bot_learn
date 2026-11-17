@@ -15,6 +15,8 @@ from .constants import LIMIT_PAUSE
 from .helpers import fetch_user
 from app_tracker.models import BotState, GoalPeriod, Participant, Report
 from app_tracker.periods import target_goals_month, work_bounds, work_month
+from app_tracker.models import BotState, Participant, Report, Media
+
 
 log = logging.getLogger(__name__)
 
@@ -192,3 +194,43 @@ def update_participant_profile(participant, vk_data: dict) -> None:
 
     if changed:
         participant.save(update_fields=changed)
+
+
+def save_report_with_media(
+        participant: Participant,
+        date_val: date,
+        goals_done: list[bool],
+        notes: dict,
+        media_data: list[dict]
+) -> Report:
+    """Сохраняет отчет за день, заметки и медиафайлы."""
+    # 1. Ищем отчет за этот день или создаем новый
+    report, created = Report.objects.get_or_create(
+        participant=participant,
+        date=date_val
+    )
+
+    # 2. Записываем галочки
+    report.goal_1_done = goals_done[0]
+    report.goal_2_done = goals_done[1]
+    report.goal_3_done = goals_done[2]
+
+    # 3. Записываем заметки
+    report.goal_1_note = notes.get('goal_1_note', '')
+    report.goal_2_note = notes.get('goal_2_note', '')
+    report.goal_3_note = notes.get('goal_3_note', '')
+    report.save()
+
+    # 4. Прикрепляем медиафайлы
+    for item in media_data:
+        Media.objects.create(
+            report=report,
+            goal_index=item.get('goal_index'),
+            kind=item.get('kind'),
+            file=item.get('file_path'),
+            external_id=item.get('external_id', ''),
+            source_url=item.get('source_url', item.get('url', '')),
+            duration=item.get('duration', 0)
+        )
+
+    return report
