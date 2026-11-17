@@ -5,7 +5,7 @@ from __future__ import annotations
 from django.utils import timezone
 
 from . import keyboards
-from .constants import CHILL_LIMIT
+from .constants import CHILL_LIMIT, LIMIT_PAUSE
 from .helpers import send
 from app_tracker.models import BotState, GoalPeriod, Participant
 from app_tracker.periods import (
@@ -18,6 +18,7 @@ from app_tracker.periods import (
 )
 from .storage import (
     chill_count,
+    pause_left,
     period_points,
     reset_state,
     sync_period_goals,
@@ -67,6 +68,7 @@ def show_menu(
             can_checkin=can_checkin,
             chill_left=chill_left,
             can_edit=is_goals_window(day),
+            pause_left=pause_left(participant, day) if is_goals_window(day) else 0,
         ),
     )
 
@@ -113,29 +115,49 @@ def _menu_card(
             lines.append(f"🟡 Сегодня отмечено {report.goals_done} из 3 · можно дополнить")
 
         if is_goals_window(day):
+            left = pause_left(participant, day)
             lines += ["", "🎯 Окно целей открыто: можно поставить цели на следующий период."]
+            if left:
+                lines.append(f"⏸ Пауз осталось: {left} из {LIMIT_PAUSE}.")
 
     elif working:
         target = target_goals_month(day)
+        paused = GoalPeriod.objects.filter(
+            participant=participant, month=month_key(day), status="paused"
+        ).exists()
         lines += [
             f"🎯 Рабочий период {period_label(month_key(day))} уже идёт.",
             "",
-            "⚠️ Цели на этот период не поставлены.",
         ]
-        if is_goals_window(day):
-            lines.append("Сегодня последний день окна — поставь цели кнопкой ниже.")
+        if paused:
+            lines += [
+                "⏸ На этот период у тебя пауза.",
+                "Баллы за него — 0, отметки недоступны.",
+            ]
         else:
-            lines.append("Окно целей откроется 28-го числа.")
+            lines.append("⚠️ Цели на этот период не поставлены.")
+            if is_goals_window(day):
+                lines.append("Сегодня последний день окна — поставь цели кнопкой ниже.")
+            else:
+                lines.append("Окно целей откроется 28-го числа.")
 
     else:
         target = target_goals_month(day)
         planned = GoalPeriod.objects.filter(
             participant=participant, month=target, status="active"
         ).first()
+        paused = GoalPeriod.objects.filter(
+            participant=participant, month=target, status="paused"
+        ).first()
 
         lines += ["💤 Перерыв между периодами.", ""]
 
-        if planned:
+        if paused:
+            lines += [
+                f"⏸ На период {period_label(target)} у тебя пауза.",
+                "Баллы за него — 0, отметки недоступны.",
+            ]
+        elif planned:
             lines += [
                 goals_bulletin(planned.goals, target),
                 "",
@@ -172,6 +194,7 @@ def menu_keyboard(participant: Participant) -> str:
         can_checkin=can_checkin,
         chill_left=chill_left,
         can_edit=is_goals_window(day),
+        pause_left=pause_left(participant, day) if is_goals_window(day) else 0,
     )
 
 

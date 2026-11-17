@@ -86,7 +86,9 @@
             </ul>
           {% else %}
             <p class="text-muted-magma mb-0">
-              {% if not work_active %}
+              {% if paused %}
+                ⏸ На этот период у тебя пауза — цели не ставятся.
+              {% elif not work_active %}
                 Цели на период {{ target_period_label }} ещё не поставлены —
                 окно открыто с 28 по 3 число.
               {% elif goals_window %}
@@ -102,7 +104,10 @@
       <div class="col-12 col-lg-5">
         <div class="card card-magma h-100 p-4">
           <h2 class="h5 mb-3 card-title-magma">Сегодня</h2>
-          {% if not work_active %}
+          {% if paused %}
+            <p class="mb-2">⏸ Пауза на этот период.</p>
+            <span class="badge badge-magma">Баллы — 0, отметки недоступны</span>
+          {% elif not work_active %}
             <p class="mb-2">Перерыв между периодами.</p>
             <span class="badge badge-magma">Новый период — {{ target_period_label }}</span>
           {% elif not goals %}

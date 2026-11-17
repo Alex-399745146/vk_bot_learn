@@ -11,6 +11,7 @@ import logging
 from django.utils import timezone
 
 from . import states
+from .constants import LIMIT_PAUSE
 from .helpers import fetch_user
 from app_tracker.models import BotState, GoalPeriod, Participant, Report
 from app_tracker.periods import work_bounds, work_month
@@ -46,7 +47,14 @@ def sync_period_goals(participant: Participant, day=None) -> GoalPeriod | None:
         return None
 
     period = GoalPeriod.objects.filter(participant=participant, month=month).first()
-    if period is None or period.status != "active":
+    if period is None:
+        return None
+
+    if period.status == "paused":
+        if participant.goals_month or any(participant.goals):
+            participant.goal_1 = participant.goal_2 = participant.goal_3 = ""
+            participant.goals_month = ""
+            participant.save(update_fields=["goal_1", "goal_2", "goal_3", "goals_month"])
         return period
 
     if participant.goals_month != month or participant.goals != period.goals:
@@ -55,6 +63,20 @@ def sync_period_goals(participant: Participant, day=None) -> GoalPeriod | None:
         participant.save(update_fields=["goal_1", "goal_2", "goal_3", "goals_month"])
 
     return period
+
+
+def pause_count(participant: Participant, year: int | None = None) -> int:
+    """Сколько пауз взято за календарный год."""
+    year = year or timezone.localdate().year
+    return GoalPeriod.objects.filter(
+        participant=participant, status="paused", paused_at__year=year
+    ).count()
+
+
+def pause_left(participant: Participant, day=None) -> int:
+    """Сколько пауз осталось в этом календарном году."""
+    day = day or timezone.localdate()
+    return max(0, LIMIT_PAUSE - pause_count(participant, day.year))
 
 
 def today_report(participant: Participant) -> Report | None:
@@ -84,6 +106,11 @@ def period_points(participant: Participant, day=None) -> int:
     day = day or timezone.localdate()
     month = work_month(day) or participant.goals_month
     if not month:
+        return 0
+
+    if GoalPeriod.objects.filter(
+        participant=participant, month=month, status="paused"
+    ).exists():
         return 0
 
     start, end = work_bounds(month)

@@ -120,6 +120,7 @@ class GoalPeriod(models.Model):
         choices=[("active", "Активен"), ("paused", "Пауза")],
         default="active"
     )
+    paused_at = models.DateTimeField("Пауза с", null=True, blank=True)
 
     class Meta:
         unique_together = ("participant", "month")

@@ -11,6 +11,7 @@ from app_tracker.periods import goals_window_label, period_label
 from .constants import (
     CHILL_LIMIT,
     GOAL_COUNT,
+    LIMIT_PAUSE,
     ON_PERIOD_WORK_END,
     ON_PERIOD_WORK_START,
 )
@@ -33,6 +34,9 @@ HELP_TEXT = (
     f"❄️ CHILL — до {CHILL_LIMIT} раз за период\n"
     "День отдыха: 0 баллов, день закрыт.\n"
     "С обычной отметкой не сочетается: один день — один статус.\n\n"
+    f"⏸ ПАУЗА — до {LIMIT_PAUSE} раз в году\n"
+    "Пропуск следующего периода: баллы за него — 0.\n"
+    "Доступна только в окне целей.\n\n"
     "📊 МОИ ЦЕЛИ\n"
     "Баллы периода, остаток Chill и VK ID для входа в кабинет.\n\n"
     "🌐 ВЕБ-КАБИНЕТ\n"

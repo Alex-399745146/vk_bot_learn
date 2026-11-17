@@ -85,6 +85,20 @@
 
     <div class="col-12 col-lg-6">
       <div class="card card-magma h-100 p-4">
+        <h2 class="h5 card-title-magma mb-3">⏸ Пауза</h2>
+        <p class="mb-2">
+          Пропуск следующего периода: <strong>0 баллов</strong>, цели не ставятся.
+        </p>
+        <ul class="mb-0">
+          <li>До <strong>{{ pause_limit }} раз в календарный год</strong>.</li>
+          <li>Кнопка доступна только в окне целей.</li>
+          <li>После лимита исчезает до следующего года.</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="col-12 col-lg-6">
+      <div class="card card-magma h-100 p-4">
         <h2 class="h5 card-title-magma mb-3">📊 Баллы и итоги</h2>
         <p class="mb-2">
           Баллы считаются за рабочий период: с {{ work_start }} по {{ work_end }} число.

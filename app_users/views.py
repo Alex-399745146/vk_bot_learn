@@ -13,6 +13,7 @@ from django.utils import timezone
 
 from app_tracker.bot.constants import (
     CHILL_LIMIT,
+    LIMIT_PAUSE,
     ON_PERIOD_GOALS_END,
     ON_PERIOD_GOALS_START,
     ON_PERIOD_WORK_END,
@@ -71,6 +72,7 @@ def help_page(request):
             "goals_start": ON_PERIOD_GOALS_START,
             "goals_end": ON_PERIOD_GOALS_END,
             "chill_limit": CHILL_LIMIT,
+            "pause_limit": LIMIT_PAUSE,
         },
     )
 
@@ -98,7 +100,14 @@ def dashboard(request):
             participant=participant, month=target, status="active"
         ).first()
 
-    if work and participant.has_goals:
+    paused = GoalPeriod.objects.filter(
+        participant=participant, month=work or target, status="paused"
+    ).exists()
+
+    if paused:
+        goals = []
+        label = period_label(work or target)
+    elif work and participant.has_goals:
         goals = participant.goals
         label = period_label(work)
     elif work is None and planned:
@@ -109,7 +118,9 @@ def dashboard(request):
         label = period_label(work or participant.goals_month or target)
 
     stats_month = work or participant.goals_month
-    if stats_month:
+    if paused:
+        period_reports = participant.reports.none()
+    elif stats_month:
         start, end = work_bounds(stats_month)
         period_reports = participant.reports.filter(date__range=(start, end))
     else:
@@ -127,6 +138,7 @@ def dashboard(request):
             "goals": goals,
             "period_label": label,
             "work_active": work is not None,
+            "paused": paused,
             "goals_window": window,
             "target_period_label": period_label(target),
             "today_report": participant.reports.filter(date=today).first() if work else None,

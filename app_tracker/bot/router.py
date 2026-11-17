@@ -20,6 +20,7 @@ from .helpers import send
 from app_tracker.models import BotState, Participant
 from app_tracker.periods import goals_window_label, is_goals_window, is_work_period
 from .onboarding import add_goal, begin_onboarding, confirm_goals, go_back
+from .pauses import cancel_pause, confirm_pause, handle_pause
 from .reporting import answer_report, confirm_chill, handle_checkin, handle_chill, start_report
 from .screens import expired, menu_keyboard, no_goals_hint, show_help, show_menu
 from .storage import get_participant, payload_command, reset_state
@@ -120,6 +121,10 @@ def handle_text(vk, participant: Participant, state: BotState, peer_id: int, tex
         )
         return
 
+    if state.state == states.PAUSE_CONFIRM:
+        send(vk, peer_id, "Нажми «Назад» или «Продолжить».", keyboards.pause_warning())
+        return
+
     show_menu(vk, participant, state, peer_id, intro="Выбери действие кнопкой ниже.")
 
 
@@ -152,6 +157,18 @@ def handle_command(
 
     if command == "chill:ok":
         confirm_chill(vk, participant, state, peer_id)
+        return
+
+    if command == "pause:start":
+        handle_pause(vk, participant, state, peer_id)
+        return
+
+    if command == "pause:ok":
+        confirm_pause(vk, participant, state, peer_id)
+        return
+
+    if command == "pause:cancel":
+        cancel_pause(vk, participant, state, peer_id)
         return
 
     if command == "menu:goals":
