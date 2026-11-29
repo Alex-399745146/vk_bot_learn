@@ -63,10 +63,14 @@ def register(request):
 
 def help_page(request):
     """Публичная инструкция: периоды, цели, отметки и Chill."""
+    profile = getattr(request.user, "profile", None)
+    participant = profile.participant if profile else None
+
     return render(
         request,
         "app_users/help.html",
         {
+            "participant": participant,
             "work_start": ON_PERIOD_WORK_START,
             "work_end": ON_PERIOD_WORK_END,
             "goals_start": ON_PERIOD_GOALS_START,

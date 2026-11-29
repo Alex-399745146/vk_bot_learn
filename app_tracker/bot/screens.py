@@ -25,7 +25,7 @@ from .storage import (
     target_paused,
     today_report,
 )
-from .texts import HELP_TEXT, goals_bulletin
+from .texts import goals_bulletin, help_text
 
 
 def _menu_flags(participant: Participant, report, day) -> tuple[bool, int, int]:
@@ -210,7 +210,7 @@ def menu_keyboard(participant: Participant) -> str:
 def show_help(vk, participant: Participant, state: BotState, peer_id: int) -> None:
     """Показывает справку и актуальное меню."""
     reset_state(state)
-    send(vk, peer_id, HELP_TEXT, menu_keyboard(participant))
+    send(vk, peer_id, help_text(participant), menu_keyboard(participant))
 
 
 def expired(vk, participant: Participant, peer_id: int) -> None:

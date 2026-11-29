@@ -53,6 +53,26 @@
       </div>
     </div>
 
+    <div class="col-12 col-lg-6">
+      <div class="card card-magma h-100 p-4">
+        <h2 class="h5 card-title-magma mb-3">🎯 Какие цели ставить</h2>
+        <ol class="mb-0">
+          <li>
+            <strong>Физическая активность</strong> — запланированная тренировка
+            не меньше 15 минут в день.
+          </li>
+          <li>
+            <strong>Полезная привычка</strong>, которую ты придумал себе сам.
+          </li>
+          <li>
+            <strong>Отказ от вредной привычки</strong>, которая у тебя есть.
+            Если вредных привычек не осталось — третьей целью можно взять
+            ещё одну полезную.
+          </li>
+        </ol>
+      </div>
+    </div>
+
     <div class="col-12">
       <div class="card card-magma h-100 p-4">
         <h2 class="h5 card-title-magma mb-3">💤 Перерыв: зачем он нужен</h2>
@@ -122,6 +142,12 @@
           <li>Открой «Мои цели» и скопируй свой <strong>VK ID</strong>.</li>
           <li>Зарегистрируйся на сайте с этим VK ID и придумай логин с паролем.</li>
         </ol>
+        {% if participant %}
+          <p class="mb-0 mt-3">
+            Мы позаботились о тебе: твой VK ID для входа на сайт —
+            <strong>{{ participant.vk_id }}</strong>.
+          </p>
+        {% endif %}
       </div>
     </div>
 
